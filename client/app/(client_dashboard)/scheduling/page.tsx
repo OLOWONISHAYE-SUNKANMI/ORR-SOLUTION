@@ -11,7 +11,7 @@ import {format, startOfWeek, getDay} from "date-fns";
 import { enUS, it } from "date-fns/locale";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { CalendarCog, ChevronLeft, ChevronRight } from "lucide-react";
-import { useSchedulingStore } from "@/store/schedulingStore";
+import { useMeetingStore } from "@/store/meetingStore";
 import { useLanguage, interpolate } from "@/lib/i18n/LanguageContext";
 
 // Simple parse function to replace date-fns parse
@@ -57,6 +57,7 @@ type EventItem = {
   end: Date;
   allDay?: boolean;
   color?: string;
+  meetingLink?: string;
 };
 
 
@@ -97,6 +98,13 @@ function EventSidebar({ items, isLoading, t }: { items: EventItem[]; isLoading: 
                   </div>
 
                  <p className="text-xs text-foreground/70 mt-3 flex gap-2">  <CalendarCog size={14}/>  {format(it.start, "EEEE, MMM d, yyyy")}</p>
+                 {it.meetingLink && (
+                   <div className="mt-3">
+                     <a href={it.meetingLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-500/20 text-blue-400 hover:text-blue-300 rounded text-xs font-medium transition-colors">
+                        Join Meeting
+                     </a>
+                   </div>
+                 )}
                 </div>
               </div>
             ))
@@ -148,7 +156,7 @@ function CustomToolbar({ localizer, label, onNavigate, view, onView, t }: any) {
 
 export default function SchedulingPage() {
   const { t, language: currentLang } = useLanguage();
-  const { meetings, isLoading, fetchMeetings } = useSchedulingStore();
+  const { meetings, isLoading, fetchMeetings } = useMeetingStore();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [currentView, setCurrentView] = useState(Views.MONTH);
 
@@ -184,7 +192,8 @@ export default function SchedulingPage() {
       title: `${meeting.meeting_type.replace('_', ' ')} - ${meeting.agenda.substring(0, 30)}...`,
       start: startDate,
       end: endDate,
-      color: "var(--color-secondary)"
+      color: "var(--color-secondary)",
+      meetingLink: meeting.meeting_link
     };
   });
 
