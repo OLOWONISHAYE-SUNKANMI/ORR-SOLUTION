@@ -70,15 +70,16 @@ export default function MeetingRequestPage() {
   };
 
   const fetchMeetingSlots = async () => {
-    if (eventTypes.length === 0) return;
-    
     setLoadingSlots(true);
     try {
-      const eventTypeUri = encodeURIComponent(eventTypes[0].uri);
+      const eventTypeUri = eventTypes.length > 0 ? encodeURIComponent(eventTypes[0].uri) : 'google-meet';
       const response = await axios.get(`/meeting-slots/?event_type_uri=${eventTypeUri}`);
-      setMeetingSlots(response.data?.data?.collection || []);
+      
+      const slots = response.data?.data?.collection || response.data?.collection || response.data || [];
+      setMeetingSlots(Array.isArray(slots) ? slots : []);
     } catch (error) {
       console.error('Failed to fetch meeting slots:', error);
+      setMeetingSlots([]);
     } finally {
       setLoadingSlots(false);
     }
@@ -86,21 +87,46 @@ export default function MeetingRequestPage() {
 
   const getAvailableDates = () => {
     const dates = new Set<string>();
-    meetingSlots.forEach(slot => {
-      if (slot.status === 'available') {
-        const date = new Date(slot.start_time).toDateString();
-        dates.add(date);
-      }
-    });
+    if (meetingSlots.length > 0) {
+      meetingSlots.forEach(slot => {
+        if (slot.status === 'available') {
+          const date = new Date(slot.start_time).toDateString();
+          dates.add(date);
+        }
+      });
+    }
     return Array.from(dates);
   };
 
   const getTimeSlotsForDate = (date: Date) => {
     const dateString = date.toDateString();
-    return meetingSlots.filter(slot => {
+    const existingSlots = meetingSlots.filter(slot => {
       const slotDate = new Date(slot.start_time).toDateString();
       return slotDate === dateString && slot.status === 'available';
     });
+
+    // If no slots found (or Calendly down), generate manual hourly slots for Google Meet
+    if (existingSlots.length === 0) {
+      const slots = [];
+      const now = new Date();
+      const targetDate = new Date(date);
+      
+      for (let hour = 9; hour <= 17; hour++) {
+        const slotDate = new Date(targetDate);
+        slotDate.setHours(hour, 0, 0, 0);
+        
+        if (slotDate > now) {
+          slots.push({
+            start_time: slotDate.toISOString(),
+            end_time: new Date(slotDate.getTime() + 60 * 60 * 1000).toISOString(),
+            status: 'available',
+            scheduling_url: 'https://meet.google.com/google-meet'
+          });
+        }
+      }
+      return slots;
+    }
+    return existingSlots;
   };
 
   const formatTime = (dateString: string) => {
@@ -180,7 +206,8 @@ export default function MeetingRequestPage() {
       const response = await axios.post('/create-meeting/', meetingData);
       
       if (response.data?.success || response.status === 200 || response.status === 201) {
-        addToast('Meeting created successfully! Redirecting to Calendly...', 'success');
+        const realMeetingLink = response.data?.redirect_url || selectedTimeSlot.scheduling_url;
+        addToast('Meeting created successfully! Redirecting to Google Meet...', 'success');
         
         // Clear form fields
         setSelectedType("discovery");
@@ -191,9 +218,9 @@ export default function MeetingRequestPage() {
         setGoals("");
         setPainPoints("");
         
-        // Open Calendly in new tab
+        // Open the REAL Google Meet link in new tab
         setTimeout(() => {
-          window.open(selectedTimeSlot.scheduling_url, '_blank');
+          window.open(realMeetingLink, '_blank');
         }, 1500);
       } else {
         const errorMessage = response.data?.message || 'Failed to create meeting. Please try again.';
@@ -333,20 +360,23 @@ export default function MeetingRequestPage() {
             {/* Dates */}
             <div className="grid grid-cols-7 gap-3 text-center text-sm">
               {getDaysInMonth(currentMonth).map((date, index) => {
-                const hasSlots = date && getAvailableDates().includes(date.toDateString());
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const isPast = date ? date < today : false;
                 const isSelected = isDateSelected(date);
-                const isToday = date && date.toDateString() === new Date().toDateString();
+                const isToday = date && date.toDateString() === today.toDateString();
+                const hasPrefetchedSlots = date && getAvailableDates().includes(date.toDateString());
 
                 return (
                   <button
                     key={index}
-                    onClick={() => date && hasSlots && setSelectedDate(date)}
-                    disabled={!date || !hasSlots}
+                    onClick={() => date && !isPast && setSelectedDate(date)}
+                    disabled={!date || isPast}
                     className={`aspect-square flex items-center justify-center rounded-xl text-sm font-medium transition-all relative group
                       ${
                         !date
                           ? "invisible"
-                          : !hasSlots
+                          : isPast
                           ? "text-white/20 cursor-not-allowed"
                           : isSelected
                           ? "bg-primary text-white shadow-lg shadow-primary/30"
@@ -358,7 +388,7 @@ export default function MeetingRequestPage() {
                     {isToday && !isSelected && (
                       <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full" />
                     )}
-                    {hasSlots && !isSelected && (
+                    {(hasPrefetchedSlots || !isPast) && !isSelected && (
                       <div className="absolute bottom-1 w-1 h-1 bg-primary/40 rounded-full group-hover:bg-primary" />
                     )}
                   </button>

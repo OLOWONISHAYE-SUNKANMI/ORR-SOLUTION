@@ -14,7 +14,10 @@ interface Meeting {
   meeting_type: string;
   requested_datetime: string;
   status: string;
-  agenda?: string;
+  agenda: string;
+  duration_minutes: number;
+  meeting_link?: string;
+  calendar_event_id?: string;
 }
 
 interface MeetingState {
@@ -23,6 +26,7 @@ interface MeetingState {
   error: string | null;
   createMeeting: (data: MeetingData) => Promise<number | null>;
   fetchMyMeetings: () => Promise<void>;
+  fetchMeetings: () => Promise<void>; // Alias for scheduling page
   getUpcomingMeetings: () => Meeting[];
   clearError: () => void;
 }
@@ -65,12 +69,17 @@ export const useMeetingStore = create<MeetingState>()((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await api.get('/mymeetings');
-      const meetings = response.data?.data || [];
-      set({ meetings, isLoading: false });
+      const meetings = response.data?.data || response.data || [];
+      set({ meetings: Array.isArray(meetings) ? meetings : [], isLoading: false });
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Failed to fetch meetings';
       set({ error: errorMessage, isLoading: false });
     }
+  },
+
+  fetchMeetings: async () => {
+    const { fetchMyMeetings } = get();
+    return fetchMyMeetings();
   },
 
   getUpcomingMeetings: () => {

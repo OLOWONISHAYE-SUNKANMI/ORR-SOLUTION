@@ -78,7 +78,7 @@ const JoinScreen: React.FC<{ onJoin: () => void; meetingTitle: string }> = ({ on
           <div className="flex flex-col gap-4 items-center lg:items-start mt-4">
              <div className="flex items-center gap-2 text-gray-400">
                <Users size={20} />
-               <span className="text-sm">Dr. Sarah Mitchell and 2 others are in this call</span>
+               <span className="text-sm">The expert and other participants will join shortly</span>
              </div>
              <div className="flex -space-x-2">
                {[1,2,3].map(i => (

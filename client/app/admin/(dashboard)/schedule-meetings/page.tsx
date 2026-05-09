@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import GoogleCalendarView from "@/app/components/ui/GoogleCalendarView";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon, MoreVertical } from "lucide-react";
+import { useAdminStore } from "@/store/adminStore";
 
 interface Event {
   id: number;
@@ -17,41 +18,28 @@ interface Event {
 }
 
 function page() {
+  const { meetings, isLoading, fetchAllMeetings } = useAdminStore();
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
-  // Sample meeting data with different statuses
-  const events: Event[] = [
-    {
-      id: 1,
-      title: "Festival - First Meeting",
-      start: new Date(2022, 0, 4, 10, 0),
-      end: new Date(2022, 0, 4, 11, 0),
-      status: "New",
-      clientName: "John Doe",
-      meetingType: "first meeting",
-      resource: { color: "#3B82F6" },
+  useEffect(() => {
+    fetchAllMeetings();
+  }, [fetchAllMeetings]);
+
+  // Map backend meetings to Event interface
+  const events: Event[] = meetings.map(m => ({
+    id: m.id,
+    title: `${m.meeting_type.replace('_', ' ')} - ${m.client_name || 'Client'}`,
+    start: new Date(m.requested_datetime),
+    end: new Date(new Date(m.requested_datetime).getTime() + m.duration_minutes * 60000),
+    status: m.status,
+    clientName: m.client_name || m.client_email || 'Unknown',
+    meetingType: m.meeting_type,
+    resource: { 
+      color: m.status === 'confirmed' ? '#13BE77' : 
+             m.status === 'requested' ? '#3B82F6' : '#EF4444' 
     },
-    {
-      id: 2,
-      title: "Exam - Follow-up",
-      start: new Date(2022, 0, 4, 14, 0),
-      end: new Date(2022, 0, 4, 15, 0),
-      status: "Confirmed",
-      clientName: "Jane Smith",
-      meetingType: "follow-up",
-      resource: { color: "#13BE77" },
-    },
-    {
-      id: 3,
-      title: "Eid Festival - First Meeting",
-      start: new Date(2022, 0, 5, 9, 0),
-      end: new Date(2022, 0, 5, 10, 0),
-      status: "Rescheduled",
-      clientName: "Ahmed Hassan",
-      meetingType: "first meeting",
-      resource: { color: "#EF4444" },
-    },
-  ];
+  }));
+
 
   return (
     <div className="min-h-screen text-white relative overflow-hidden star">

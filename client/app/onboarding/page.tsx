@@ -418,7 +418,7 @@ export default function OnboardingPage() {
       time_format_24h: finalAnswers['1-3']?.includes('24-hour') || false,
       currency: finalAnswers['1-4']?.includes('EUR') ? 'EUR' : 'USD',
       accepted_service_agreement: finalAnswers['2-0']?.includes('accept') || finalAnswers['2-0']?.includes('accetto') || true,
-      portal_interests: Array.isArray(finalAnswers['3-0']) ? finalAnswers['3-0'].join(', ') : finalAnswers['3-0'] || '',
+      portal_interests: Array.isArray(finalAnswers['3-0']) ? finalAnswers['3-0'] : (finalAnswers['3-0'] ? [finalAnswers['3-0']] : []),
       portal_interests_other: finalAnswers['3-0']?.includes('Others') ? 'other interests' : undefined,
       user_type: (() => {
         const idx = getOptionIndex(4, 0);
@@ -431,17 +431,12 @@ export default function OnboardingPage() {
         const stages = ['exploration', 'pre_startup', 'operational', 'scaling', 'unsure'];
         return stages[idx] || 'exploration';
       })(),
-      orr_pillars: Array.isArray(finalAnswers['4-2']) ? finalAnswers['4-2'].join(', ') : finalAnswers['4-2'] || '',
+      orr_pillars: Array.isArray(finalAnswers['4-2']) ? finalAnswers['4-2'] : (finalAnswers['4-2'] ? [finalAnswers['4-2']] : []),
       has_active_project: finalAnswers['4-3']?.toLowerCase().includes('yes') || finalAnswers['4-3']?.toLowerCase().includes('sì') ? 'yes' : 'no',
       project_description: finalAnswers['4-4'] || '',
       meeting_format: finalAnswers['5-0']?.toLowerCase().includes('video') ? 'video' : 'phone',
       communication_tone: (() => {
-        const tone = finalAnswers['5-1'];
-        if (!tone || Array.isArray(tone)) return 'no_preference';
-        
-        const q = getQuestionnaire(t, interpolate)[5 as keyof ReturnType<typeof getQuestionnaire>];
-        const s = q.steps[1];
-        const idx = (s.options || []).indexOf(tone);
+        const idx = getOptionIndex(5, 1);
         const toneMap: Record<number, string> = {
           0: 'concise',
           1: 'detailed',
@@ -449,10 +444,10 @@ export default function OnboardingPage() {
           3: 'non_technical',
           4: 'no_preference'
         };
-        return toneMap[idx] ?? 'no_preference';
+        return toneMap[idx] || 'no_preference';
       })(),
       notification_preference: finalAnswers['5-2']?.toLowerCase().includes('email') ? 'email' : finalAnswers['5-2']?.toLowerCase().includes('both') ? 'both' : 'email',
-      ai_specialist_domains: '',
+      ai_specialist_domains: [],
       ai_specialist_other: undefined,
       additional_context: finalAnswers['6-0'] || '',
     };

@@ -369,7 +369,14 @@ export default function Dashboard() {
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-foreground truncate">{formatMeetingType(meeting.meeting_type)}</p>
                           <p className="text-xs text-foreground opacity-60">{time}</p>
-                          <p className="text-xs text-primary capitalize">{meeting.status}</p>
+                          <div className="flex items-center justify-between mt-1">
+                            <p className="text-xs text-primary capitalize">{meeting.status}</p>
+                            {meeting.meeting_link && (
+                              <a href={meeting.meeting_link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="inline-flex items-center px-2 py-1 bg-blue-500/20 text-blue-400 hover:text-blue-300 rounded text-[10px] font-medium transition-colors">
+                                Join Meeting
+                              </a>
+                            )}
+                          </div>
                         </div>
                       </div>
                     );
