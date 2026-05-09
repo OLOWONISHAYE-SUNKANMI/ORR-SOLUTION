@@ -30,9 +30,7 @@ const MeetingRoom: React.FC<{ meetingId: string }> = ({ meetingId }) => {
   }, []);
 
   const participants: Participant[] = [
-    { id: "1", name: "You", isMe: true },
-    { id: "2", name: "Dr. Sarah Mitchell", avatar: "/avatars/sarah.jpg" },
-    { id: "3", name: "James Wilson", avatar: "/avatars/james.jpg" },
+    { id: "1", name: "You (Waiting for others...)", isMe: true },
   ];
 
   return (
@@ -123,11 +121,11 @@ const MeetingRoom: React.FC<{ meetingId: string }> = ({ meetingId }) => {
                 <div className="space-y-6">
                   <div>
                     <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Joining info</h4>
-                    <p className="text-sm text-gray-300 break-all">https://meet.google.com/{meetingId || "xyz-abc-123"}</p>
+                    <p className="text-sm text-gray-300 break-all">Google Meet link will appear here shortly</p>
                   </div>
                   <div>
                     <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Description</h4>
-                    <p className="text-sm text-gray-400">Strategic planning session for the Living Systems Regeneration project. Focus on Phase 1 milestones and budget allocation.</p>
+                    <p className="text-sm text-gray-400">Loading meeting details...</p>
                   </div>
                 </div>
               )}

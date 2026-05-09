@@ -13,20 +13,20 @@ interface OnboardingData {
   time_format_24h: boolean;
   currency: string;
   accepted_service_agreement: boolean;
-  portal_interests: string;
+  portal_interests: string[];
   portal_interests_other?: string;
   user_type: string;
   user_type_other?: string;
   project_stage: string;
-  orr_pillars: string;
+  orr_pillars: string[];
   has_active_project: string;
   project_description: string;
-  challenges?: string;
+  challenges?: string[];
   challenges_other?: string;
   meeting_format: string;
   communication_tone: string;
   notification_preference: string;
-  ai_specialist_domains?: string;
+  ai_specialist_domains?: string[];
   ai_specialist_other?: string;
   additional_context?: string;
 }

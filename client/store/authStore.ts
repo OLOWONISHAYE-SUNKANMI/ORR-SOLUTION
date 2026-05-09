@@ -12,12 +12,9 @@ interface User {
   first_name: string;
   last_name: string;
   user_type: string;
-  permissions: {
-    can_access_portal: boolean;
-    can_request_meetings: boolean;
-    can_create_tickets: boolean;
-    can_view_resources: boolean;
-  };
+  role_name?: string;
+  role_display?: string;
+  permissions: Record<string, boolean>;
 }
 
 interface AuthState {
@@ -274,7 +271,25 @@ export const useAuthStore = create<AuthState>()(
         } catch (error: unknown) {
           const err = error as AxiosError;
           const errorData = err.response?.data as Record<string, unknown> | undefined;
-          let errorMessage = (errorData?.message as string) || err.message || "Google login failed";
+          
+          let errorMessage = "Google login failed";
+          
+          if (errorData && typeof errorData === "object") {
+            if ("message" in errorData && typeof errorData.message === "string") {
+              errorMessage = errorData.message;
+            } else {
+               errorMessage = Object.entries(errorData)
+                .map(([key, value]) => {
+                  const displayValue = Array.isArray(value)
+                    ? value.join(", ")
+                    : String(value);
+                  return `${key}: ${displayValue}`;
+                })
+                .join(" | ");
+            }
+          } else {
+            errorMessage = err.message || "Google login failed";
+          }
 
           set({ error: errorMessage, isLoading: false });
           useToastStore.getState().addToast(errorMessage, "error");
