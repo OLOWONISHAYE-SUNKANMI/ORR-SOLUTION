@@ -10,6 +10,7 @@ import { useBillingStore } from '@/store/billingStore';
 import { useDocumentStore } from '@/store/documentStore';
 import { useNotificationStore } from '@/store/notificationStore';
 import { useWalletStore } from '@/store/walletStore';
+import { useAuthStore } from '@/store/authStore';
 import api from '@/lib/axios';
 import { useLanguage } from '@/app/components/LanguageProvider';
 import Skeleton from '@/components/ui/Skeleton';
@@ -53,6 +54,7 @@ const StatCard: React.FC<StatCardProps> = ({ icon, title, value, loading, change
 export default function Dashboard() {
   const { t, interpolate } = useLanguage();
   const router = useRouter();
+  const { user } = useAuthStore();
   const { fetchMyMeetings, getUpcomingMeetings, meetings, isLoading } = useMeetingStore();
   const { fetchBillingHistory, billingHistory, isLoading: billingLoading } = useBillingStore();
   const { fetchDocuments, documents, isLoading: docsLoading } = useDocumentStore();
@@ -224,7 +226,7 @@ export default function Dashboard() {
                   👋
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold text-foreground">{interpolate(t.dashboard.page.welcome.morning)}</h2>
+                  <h2 className="text-xl font-semibold text-foreground">{interpolate(t.dashboard.page.welcome.morning, { firstname: user?.first_name ? ` ${user.first_name}` : '' })}</h2>
                   <p className="text-foreground opacity-60">{interpolate(t.dashboard.page.welcome.goals)}</p>
                 </div>
               </div>

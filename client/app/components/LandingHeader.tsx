@@ -6,6 +6,7 @@ import { LanguageToggle } from './LanguageToggle';
 import { useLanguage } from './LanguageProvider';
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { AuthSelectionToast } from './AuthSelectionToast';
 
 export function LandingHeader() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -14,8 +15,13 @@ export function LandingHeader() {
   const [isMobileServicesOpen, setIsMobileServicesOpen] = useState(false);
   const [isLegalOpen, setIsLegalOpen] = useState(false);
   const [isMobileLegalOpen, setIsMobileLegalOpen] = useState(false);
+  const [authModalState, setAuthModalState] = useState<{isOpen: boolean, type: 'login' | 'register'}>({isOpen: false, type: 'login'});
   const pathname = usePathname();
   const { t } = useLanguage();
+
+  const openAuthModal = (type: 'login' | 'register') => {
+    setAuthModalState({ isOpen: true, type });
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -87,12 +93,12 @@ export function LandingHeader() {
         </nav>
 
         <div className="hidden lg:flex items-center space-x-3">
-          <Link href="/login" className='bg-white py-2 px-4 text-black rounded-xl hover:bg-[#13BE77] hover:text-white text-sm xl:text-base'>
+          <button onClick={() => openAuthModal('login')} className='bg-white py-2 px-4 text-black rounded-xl hover:bg-[#13BE77] hover:text-white text-sm xl:text-base cursor-pointer'>
             {t.nav.signIn}
-          </Link>
-          <Link href="/register" className='bg-white py-2 px-4 text-black rounded-xl hover:bg-[#13BE77] hover:text-white text-sm xl:text-base'>
+          </button>
+          <button onClick={() => openAuthModal('register')} className='bg-white py-2 px-4 text-black rounded-xl hover:bg-[#13BE77] hover:text-white text-sm xl:text-base cursor-pointer'>
             {t.nav.signUp}
-          </Link>
+          </button>
           <LanguageToggle />
           <ThemeToggle />
         </div>
@@ -191,22 +197,27 @@ export function LandingHeader() {
               {t.nav.contact}
             </Link>
             <div className="pt-6 border-t border-white/10 flex items-center justify-between">
-              <Link href="/login" className='bg-white py-2 px-10 text-black rounded-xl hover:bg-[#13BE77] hover:text-white transition-colors' onClick={() => setIsMobileMenuOpen(false)}>
+              <button onClick={() => { setIsMobileMenuOpen(false); openAuthModal('login'); }} className='bg-white py-2 px-10 text-black rounded-xl hover:bg-[#13BE77] hover:text-white transition-colors cursor-pointer'>
                 {t.nav.signIn}
-              </Link>
+              </button>
               <div className="flex items-center gap-2">
                 <LanguageToggle />
                 <ThemeToggle />
               </div>
             </div>
             <div className='pt-8 border-t border-white/10'>
-              <Link href="/register" className='bg-white py-2 px-10 text-black rounded-xl hover:bg-[#13BE77] hover:text-white transition-colors' onClick={() => setIsMobileMenuOpen(false)}>
+              <button onClick={() => { setIsMobileMenuOpen(false); openAuthModal('register'); }} className='bg-white py-2 px-10 text-black rounded-xl hover:bg-[#13BE77] hover:text-white transition-colors cursor-pointer'>
                 {t.nav.signUp}
-              </Link>
+              </button>
             </div>
           </nav>
         </div>
       </div>
+      <AuthSelectionToast 
+        isOpen={authModalState.isOpen} 
+        type={authModalState.type} 
+        onClose={() => setAuthModalState({ ...authModalState, isOpen: false })} 
+      />
     </header>
   );
 }
