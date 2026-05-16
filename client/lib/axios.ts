@@ -10,6 +10,7 @@ const api = axios.create({
 });
 
 const getCSRFToken = (): string | null => {
+  if (typeof window === 'undefined') return null;
   const cookies = document.cookie.split(";");
   for (const cookie of cookies) {
     const [name, value] = cookie.trim().split("=");
@@ -35,14 +36,17 @@ api.interceptors.request.use(
 
     const isPublicEndpoint = publicEndpoints.some(endpoint => url.includes(endpoint));
 
-    // Always check localStorage for accessToken
-    const accessToken = localStorage.getItem("accessToken");
-    if (accessToken && !isPublicEndpoint) {
-      config.headers.Authorization = `Bearer ${accessToken}`;
+    // Check for accessToken (only in browser)
+    if (typeof window !== 'undefined') {
+      const accessToken = localStorage.getItem("accessToken");
+      if (accessToken && !isPublicEndpoint) {
+        config.headers.Authorization = `Bearer ${accessToken}`;
+      }
     }
 
-    // Add CSRF token for state-changing requests
+    // Add CSRF token for state-changing requests (only in browser)
     if (
+      typeof window !== 'undefined' &&
       ["post", "put", "patch", "delete"].includes(
         config.method?.toLowerCase() || "",
       )
@@ -54,7 +58,8 @@ api.interceptors.request.use(
     }
 
     if (process.env.NODE_ENV === 'development') {
-      console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
+      const baseURL = config.baseURL || "";
+      console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${baseURL}${config.url}`);
     }
     return config;
   },
@@ -81,12 +86,14 @@ api.interceptors.response.use(
         (typeof errorData?.detail === "string" && errorData.detail.toLowerCase().includes("token"));
 
       if (!isLoginEndpoint && isTokenInvalid) {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        
-        // Only redirect if not already on an auth page
-        if (!window.location.pathname.startsWith('/login') && !window.location.pathname.startsWith('/register')) {
-          window.location.href = "/login/";
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("refreshToken");
+          
+          // Only redirect if not already on an auth page
+          if (!window.location.pathname.startsWith('/login') && !window.location.pathname.startsWith('/register')) {
+            window.location.href = "/login/";
+          }
         }
         return Promise.reject(error);
       }

@@ -25,7 +25,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
 import Link from 'next/link';
 
-export default function DocumentViewerClient({ id, type, name }: { id: string, type: 'doc' | 'sheet' | 'slide', name: string }) {
+import { VaultDocument } from '@/lib/vault-api';
+
+export default function DocumentViewerClient({ id, document }: { id: string, document: VaultDocument }) {
   const [loading, setLoading] = useState(true);
   const [showAiPanel, setShowAiPanel] = useState(true);
   const [activeTab, setActiveTab] = useState<'ai' | 'history' | 'comments'>('ai');
@@ -38,7 +40,7 @@ export default function DocumentViewerClient({ id, type, name }: { id: string, t
 
   // Simulate loading
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 1500);
+    const timer = setTimeout(() => setLoading(false), 1000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -51,7 +53,7 @@ export default function DocumentViewerClient({ id, type, name }: { id: string, t
 
     // Simulate AI response
     setTimeout(() => {
-      setMessages([...newMessages, { role: 'ai', content: 'Based on the document content, the strategic roadmap focuses on three main pillars: Operational Excellence, Digital Transformation, and Sustainable Growth. The projected timeline for Phase 1 is Q3 2026.' }]);
+      setMessages([...newMessages, { role: 'ai', content: `Based on the document "${document.name}", I can see it was last modified on ${new Date(document.lastModified).toLocaleString()}. Should I provide a detailed executive summary?` }]);
       setAiLoading(false);
     }, 2000);
   };
@@ -65,35 +67,80 @@ export default function DocumentViewerClient({ id, type, name }: { id: string, t
   };
 
   const getDocConfig = () => {
-    switch (type) {
+    let rawType = document.document_type || document.type;
+    
+    // If type is missing, try to detect from title or link
+    if (!rawType || rawType === 'file') {
+      const nameSource = document.name || document.title || document.link || '';
+      const match = nameSource.match(/\.([a-z0-9]+)(\?.*)?$/i);
+      if (match) rawType = match[1];
+    }
+    
+    const type = (rawType || 'pdf').toLowerCase().replace(/^\./, '');
+    const normalizedType = document.document_source === 'google_doc' ? 'docx' : 
+                          document.document_source === 'google_sheet' ? 'xlsx' : 
+                          document.document_source === 'google_slide' ? 'pptx' : 
+                          type;
+
+    let link = document.link;
+    
+    // Ensure absolute URL for local files
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || 'https://orr-backend-105825824472.asia-southeast2.run.app';
+    if (link && !link.startsWith('http')) {
+      link = `${apiBase}${link}`;
+    }
+
+    // Use Google Docs Viewer for Office files if it's a direct file link (not a Google Native Doc)
+    const isOffice = ['docx', 'doc', 'xlsx', 'xls', 'pptx', 'ppt'].includes(normalizedType);
+    const isGoogleNative = document.document_source?.startsWith('google_') || (link && link.includes('docs.google.com'));
+    
+    let finalUrl = link;
+    if (isOffice && !isGoogleNative && link) {
+      finalUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(link)}&embedded=true`;
+    }
+    
+    switch (normalizedType) {
       case 'sheet':
+      case 'xlsx':
+      case 'xls':
         return {
           icon: FileSpreadsheet,
           color: 'text-green-400',
           bgColor: 'bg-green-500/10',
-          url: 'https://docs.google.com/spreadsheets/d/1eBy-Xv6oO_E89B1uY7I_Yv1Yv1Yv1Yv1Yv1Yv1Yv1Yv/preview',
+          url: finalUrl,
           label: 'Spreadsheet'
         };
       case 'slide':
+      case 'pptx':
+      case 'ppt':
         return {
           icon: Presentation,
           color: 'text-orange-400',
           bgColor: 'bg-orange-500/10',
-          url: 'https://docs.google.com/presentation/d/1eBy-Xv6oO_E89B1uY7I_Yv1Yv1Yv1Yv1Yv1Yv1Yv1Yv/preview',
+          url: finalUrl,
           label: 'Presentation'
+        };
+      case 'pdf':
+        return {
+          icon: FileText,
+          color: 'text-red-400',
+          bgColor: 'bg-red-500/10',
+          url: finalUrl,
+          label: 'PDF'
         };
       default:
         return {
           icon: FileText,
           color: 'text-blue-400',
           bgColor: 'bg-blue-500/10',
-          url: 'https://docs.google.com/document/d/1eBy-Xv6oO_E89B1uY7I_Yv1Yv1Yv1Yv1Yv1Yv1Yv1Yv/preview',
+          url: finalUrl,
           label: 'Document'
         };
     }
   };
 
   const config = getDocConfig();
+  const name = document.name;
 
   if (loading) {
     return <DocumentSkeleton />;

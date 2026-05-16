@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Search, 
   Grid, 
@@ -36,29 +36,16 @@ import {
   Check,
   ChevronDown as ChevronDownIcon
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
-
-// --- MOCK DATA ---
-const MOCK_FILES = [
-  { id: '1', name: 'Strategic Roadmap 2026', type: 'doc', folder: 'Root', size: '2.4 MB', lastModified: '2026-04-20', project: 'ORR-001', locked: false, category: 'Strategy' },
-  { id: '2', name: 'Financial Projections Q3', type: 'sheet', folder: 'Finances', size: '1.1 MB', lastModified: '2026-04-18', project: 'ORR-002', locked: true, category: 'Finance' },
-  { id: '3', name: 'Board Presentation - April', type: 'slide', folder: 'Presentations', size: '5.8 MB', lastModified: '2026-04-25', project: 'ORR-001', locked: false, category: 'Corporate' },
-  { id: '4', name: 'Audit Report Draft', type: 'doc', folder: 'Root', size: '840 KB', lastModified: '2026-04-22', project: 'ORR-003', locked: true, category: 'Audit' },
-  { id: '5', name: 'Market Analysis', type: 'doc', folder: 'Research', size: '3.2 MB', lastModified: '2026-04-15', project: 'ORR-001', locked: false, category: 'Marketing' },
-];
-
-const MOCK_FOLDERS = [
-  { id: 'f1', name: 'Finances', parent: 'Root', items: 12 },
-  { id: 'f2', name: 'Presentations', parent: 'Root', items: 5 },
-  { id: 'f3', name: 'Research', parent: 'Root', items: 8 },
-  { id: 'f4', name: 'Archived', parent: 'Root', items: 24 },
-];
+import { vaultApi, VaultDocument, VaultFolder } from '@/lib/vault-api';
+import { AuthService } from '@/lib/auth';
 
 export default function DocumentWorkspace() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
-  const [currentFolder, setCurrentFolder] = useState('Root');
+  const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<any>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -68,34 +55,94 @@ export default function DocumentWorkspace() {
   const [isUploading, setIsUploading] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareFile, setShareFile] = useState<any>(null);
+  
+  const [files, setFiles] = useState<VaultDocument[]>([]);
+  const [folders, setFolders] = useState<VaultFolder[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Breadcrumbs logic
-  const breadcrumbs = useMemo(() => {
-    if (currentFolder === 'Root') return ['Root'];
-    return ['Root', currentFolder];
-  }, [currentFolder]);
+  const authService = AuthService.getInstance();
+  const user = authService.getUser();
 
-  const filteredFolders = MOCK_FOLDERS.filter(f => f.parent === currentFolder && f.name.toLowerCase().includes(searchQuery.toLowerCase()));
-  const filteredFiles = MOCK_FILES.filter(f => f.folder === currentFolder && f.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  useEffect(() => {
+    fetchDocuments();
+  }, []);
 
-  const handleFileClick = (file: any) => {
-    if (file.locked) {
-      setShowPaymentModal(true);
-      setSelectedFile(file);
-    } else {
-      // For now, let's just open the summary panel when a file is clicked if it's already selected
-      // or navigate if double clicked? Actually, let's make it so clicking selects it for summary.
-      setSummaryFile(file);
-      setShowSummary(true);
+  const fetchDocuments = async () => {
+    try {
+      setIsLoading(true);
+      const [docsData, foldersData] = await Promise.all([
+        vaultApi.getDocuments(),
+        vaultApi.getFolders()
+      ]);
+      setFiles(docsData);
+      setFolders(foldersData);
+    } catch (error) {
+      console.error('Failed to fetch documents:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleOpenDocument = (fileId: string) => {
-    window.location.href = `/document/${fileId}`;
+  const currentFolder = useMemo(() => {
+     if (!currentFolderId) return { id: null, name: 'Root' };
+     return folders.find(f => f.id.toString() === currentFolderId.toString()) || { id: null, name: 'Root' };
+  }, [currentFolderId, folders]);
+
+  // Breadcrumbs logic
+  const breadcrumbs = useMemo(() => {
+    const crumbs = [{ id: null, name: 'Root' }];
+    if (currentFolderId) {
+      // For now we assume shallow structure, but we can expand if needed
+      crumbs.push({ id: currentFolderId as any, name: currentFolder.name });
+    }
+    return crumbs;
+  }, [currentFolderId, currentFolder]);
+
+  const filteredFolders = folders.filter(f => {
+     const isChild = !currentFolderId ? !f.parent : f.parent?.toString() === currentFolderId.toString();
+     return isChild && f.name.toLowerCase().includes(searchQuery.toLowerCase());
+  });
+
+  const filteredFiles = Array.isArray(files) ? files.filter(f => {
+     const matchesSearch = f.name.toLowerCase().includes(searchQuery.toLowerCase());
+     const matchesFolder = !currentFolderId ? !f.folder_id && !f.folder : (f.folder_id?.toString() === currentFolderId.toString() || f.folder?.toString() === currentFolderId.toString());
+     return matchesSearch && matchesFolder;
+  }) : [];
+
+  const handleFileClick = (file: any) => {
+    setSummaryFile(file);
+    setShowSummary(true);
+  };
+
+  const router = useRouter();
+
+  const handleOpenDocument = (file: any) => {
+    router.push(`/document/${file.id}`);
   };
 
   const handleCreateNew = () => {
     setIsCreateDropdownOpen(!isCreateDropdownOpen);
+  };
+
+  const handleCreateGoogleDoc = async (title: string) => {
+    if (!user?.client_id && !user?.admin_id) {
+      alert("User profile not found. Please log in again.");
+      return;
+    }
+    
+    try {
+      setIsUploading(true);
+      const clientId = user.client_id || 1; // Fallback for testing
+      const newDoc = await vaultApi.createGoogleDoc(title, clientId, 'google_doc', currentFolderId);
+      await fetchDocuments();
+      setShowCreateModal(false);
+      alert(`Created Google Doc: ${newDoc.title}`);
+    } catch (error) {
+      console.error('Failed to create Google Doc:', error);
+      alert("Error creating document.");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleUploadClick = () => {
@@ -112,7 +159,7 @@ export default function DocumentWorkspace() {
     const files = e.target.files;
     if (files && files.length > 0) {
       setIsUploading(true);
-      // Mock upload process
+      // Mock upload process for now
       setTimeout(() => {
         setIsUploading(false);
         alert(`Successfully uploaded ${files.length} file(s)`);
@@ -295,15 +342,15 @@ export default function DocumentWorkspace() {
       {/* Breadcrumbs */}
       <nav className="flex items-center gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar">
         {breadcrumbs.map((crumb, idx) => (
-          <React.Fragment key={crumb}>
+          <React.Fragment key={crumb.id || 'root'}>
             <button 
-              onClick={() => setCurrentFolder(crumb)}
+              onClick={() => setCurrentFolderId(crumb.id)}
               className={clsx(
                 "text-sm font-medium transition-colors whitespace-nowrap",
                 idx === breadcrumbs.length - 1 ? "text-primary" : "text-white/60 hover:text-white"
               )}
             >
-              {crumb}
+              {crumb.name}
             </button>
             {idx < breadcrumbs.length - 1 && <ChevronRight size={14} className="text-white/20" />}
           </React.Fragment>
@@ -324,7 +371,7 @@ export default function DocumentWorkspace() {
                 {filteredFolders.map(folder => (
                   <button 
                     key={folder.id}
-                    onClick={() => setCurrentFolder(folder.name)}
+                    onClick={() => setCurrentFolderId(folder.id)}
                     className="group bg-card/30 hover:bg-card/60 border border-white/10 rounded-2xl p-5 flex items-center gap-4 transition-all text-left"
                   >
                     <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary transition-transform group-hover:scale-110">
@@ -332,7 +379,7 @@ export default function DocumentWorkspace() {
                     </div>
                     <div>
                       <div className="text-white font-bold text-sm truncate max-w-[120px]">{folder.name}</div>
-                      <div className="text-white/40 text-[10px] uppercase font-black tracking-wider">{folder.items} Items</div>
+                      <div className="text-white/40 text-[10px] uppercase font-black tracking-wider">{folder.doc_count || 0} Items</div>
                     </div>
                   </button>
                 ))}
@@ -394,7 +441,7 @@ export default function DocumentWorkspace() {
             <GeminiSummaryPanel 
               file={summaryFile} 
               onClose={() => setShowSummary(false)} 
-              onOpen={() => handleOpenDocument(summaryFile.id)}
+              onOpen={() => handleOpenDocument(summaryFile)}
               onShare={() => handleShare(summaryFile)}
             />
           )}
@@ -418,6 +465,7 @@ export default function DocumentWorkspace() {
         {showCreateModal && (
           <CreateModal 
             onClose={() => setShowCreateModal(false)} 
+            onCreate={handleCreateGoogleDoc}
           />
         )}
       </AnimatePresence>
@@ -454,9 +502,9 @@ function FileCard({ file, onClick, isActive, onShare }: { file: any, onClick: ()
         <div>
           <h3 className="text-white font-bold text-lg truncate mb-1">{file.name}</h3>
           <div className="flex items-center gap-2 text-[10px] text-white/30 font-black uppercase tracking-wider">
-            <span>{file.project}</span>
+            <span>{file.project || 'WORKSPACE'}</span>
             <span className="w-1 h-1 rounded-full bg-white/20" />
-            <span>{file.category}</span>
+            <span>{file.category || 'GENERAL'}</span>
           </div>
         </div>
 
@@ -511,11 +559,11 @@ function FileRow({ file, onClick, isActive, showFull = true, onShare }: { file: 
           </div>
         </div>
       </td>
-      {showFull && <td className="py-4 px-6 text-white/60 font-medium">{file.project}</td>}
+      {showFull && <td className="py-4 px-6 text-white/60 font-medium">{file.project || 'WORKSPACE'}</td>}
       {showFull && (
         <td className="py-4 px-6">
           <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-white/60 text-[10px] font-black uppercase tracking-wider">
-            {file.category}
+            {file.category || 'GENERAL'}
           </span>
         </td>
       )}
@@ -537,12 +585,12 @@ function FileRow({ file, onClick, isActive, showFull = true, onShare }: { file: 
   );
 }
 
-function CreateModal({ onClose }: { onClose: () => void }) {
+function CreateModal({ onClose, onCreate }: { onClose: () => void, onCreate: (title: string) => void }) {
   const options = [
-    { label: 'Document', icon: FileText, color: 'text-blue-400', desc: 'Write strategy, reports, or plans' },
-    { label: 'Spreadsheet', icon: FileSpreadsheet, color: 'text-green-400', desc: 'Analyze data, projections, and budgets' },
-    { label: 'Presentation', icon: Presentation, color: 'text-orange-400', desc: 'Create pitches, reviews, and slides' },
-    { label: 'Folder', icon: Folder, color: 'text-primary', desc: 'Organize your workspace hierarchy' },
+    { label: 'Document', icon: FileText, color: 'text-blue-400', desc: 'Write strategy, reports, or plans', type: 'doc' },
+    { label: 'Spreadsheet', icon: FileSpreadsheet, color: 'text-green-400', desc: 'Analyze data, projections, and budgets', type: 'sheet' },
+    { label: 'Presentation', icon: Presentation, color: 'text-orange-400', desc: 'Create pitches, reviews, and slides', type: 'slide' },
+    { label: 'Folder', icon: Folder, color: 'text-primary', desc: 'Organize your workspace hierarchy', type: 'folder' },
   ];
 
   return (
@@ -568,6 +616,14 @@ function CreateModal({ onClose }: { onClose: () => void }) {
             {options.map((opt, i) => (
               <button 
                 key={i}
+                onClick={() => {
+                  if (opt.type === 'doc') {
+                    const title = prompt("Enter document title:", "New Strategy Document");
+                    if (title) onCreate(title);
+                  } else {
+                    alert("Only 'Document' (Google Docs) is currently integrated. More coming soon!");
+                  }
+                }}
                 className="group bg-white/5 border border-white/10 hover:border-primary/50 rounded-2xl p-6 text-left transition-all hover:bg-white/10"
               >
                 <div className={clsx("w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center mb-4 transition-transform group-hover:scale-110", opt.color)}>

@@ -9,6 +9,8 @@ export interface User {
   user_type: 'admin' | 'client';
   role: string;
   can_edit_content: boolean;
+  client_id?: number;
+  admin_id?: number;
   permissions: {
     [key: string]: boolean;
   };
