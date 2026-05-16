@@ -65,6 +65,7 @@ interface WalletState {
   selectedPlan: PricingPlan | null;
   stripeCustomerId: string | null;
   subscriptionStatus: SubscriptionStatus | null;
+  exchangeRates: Record<string, number>;
   
   // Actions
   fetchWalletBalance: () => Promise<void>;
@@ -73,6 +74,8 @@ interface WalletState {
   fetchBillingHistory: () => Promise<void>;
   fetchTransactions: (params?: { page?: number; type?: string; status?: string }) => Promise<void>;
   fetchSubscriptionStatus: () => Promise<void>;
+  getDisplayBalance: () => number;
+  formatAmount: (amount: number, targetCurrency?: string) => string;
   createStripeCustomer: () => Promise<string | null>;
   createSetupIntent: () => Promise<{clientSecret: string, customerId: string} | null>;
   addPaymentMethod: (paymentMethodId: string) => Promise<boolean>;
@@ -97,18 +100,24 @@ export const useWalletStore = create<WalletState>()((set, get) => ({
   selectedPlan: null,
   stripeCustomerId: null,
   subscriptionStatus: null,
+  exchangeRates: {
+    'USD': 1.0,
+    'EUR': 0.92, // Mock exchange rate: 1 USD = 0.92 EUR
+  },
 
   fetchWalletBalance: async () => {
     set({ isLoading: true });
     try {
       const response = await api.get('/wallet/balance/');
-      const backendCurrency = response.data.data?.currency;
+      const data = response.data.data || response.data;
+      const backendCurrency = data?.currency;
       const currentCurrency = get().currency;
+      
       set({ 
-        walletBalance: Number(response.data.data?.balance || 0),
-        // Only update currency from the balance endpoint if we haven't set one yet
-        // This prevents the balance fetch from overwriting a user-chosen currency
-        currency: backendCurrency || currentCurrency,
+        walletBalance: Number(data?.balance || 0),
+        // If the backend has a currency set, we use it. 
+        // If not, we keep the user's current local preference.
+        currency: backendCurrency || currentCurrency || 'USD',
         isLoading: false
       });
     } catch (error) {
@@ -498,6 +507,9 @@ export const useWalletStore = create<WalletState>()((set, get) => ({
       delete (payload as any).updated_at;
 
       await api.post('/onboarding/submit/', payload);
+      
+      // Save to localStorage as a fallback to prevent re-prompting if backend is slow
+      localStorage.setItem('orr-user-currency', newCurrency);
 
       // Refresh data without letting balance fetch overwrite the currency
       await Promise.all([
@@ -518,6 +530,29 @@ export const useWalletStore = create<WalletState>()((set, get) => ({
       useToastStore.getState().addToast('Currency applied locally. Sync will retry on next session.', 'info');
       return true; // Return true so the modal closes
     }
+  },
+
+  getDisplayBalance: () => {
+    const { walletBalance, currency, exchangeRates } = get();
+    // Assuming walletBalance from backend is always in USD (base currency)
+    // If currency is EUR, we multiply by the rate.
+    if (currency === 'EUR' && exchangeRates['EUR']) {
+      return walletBalance * exchangeRates['EUR'];
+    }
+    return walletBalance;
+  },
+
+  formatAmount: (amount: number, targetCurrency?: string) => {
+    const { currency, exchangeRates } = get();
+    const activeCurrency = targetCurrency || currency;
+    
+    let displayAmount = amount;
+    if (activeCurrency === 'EUR' && exchangeRates['EUR']) {
+      displayAmount = amount * exchangeRates['EUR'];
+    }
+    
+    const symbol = activeCurrency === 'EUR' ? '€' : '$';
+    return `${symbol}${displayAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   },
 
   healthCheck: async () => {

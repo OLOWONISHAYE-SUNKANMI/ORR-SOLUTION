@@ -53,19 +53,11 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     setHasHydrated 
   } = useLanguageStore();
 
-  const { currency } = useWalletStore();
+  const { currency, exchangeRates } = useWalletStore();
 
   const t = useMemo(() => {
-    const baseT = getTranslations(language);
-    // Create a shallow copy and then deep copy only the necessary nested path
-    // to avoid expensive full JSON serialization if possible, 
-    // but for simplicity and safety against mutation of the base translation:
-    const modifiedT = JSON.parse(JSON.stringify(baseT));
-    if (modifiedT.dashboard?.pricing) {
-      modifiedT.dashboard.pricing.currency = currency === 'EUR' ? '€' : '$';
-    }
-    return modifiedT;
-  }, [language, currency]);
+    return getTranslations(language);
+  }, [language]);
 
   // Apply language preference and update DOM
   const applyLanguage = useCallback(
@@ -82,16 +74,37 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   // Interpolation helper: matches {key} pattern used in translations
   const interpolate = useCallback((text: string, params?: Record<string, any>) => {
     if (!text) return '';
+    
+    // Default dynamic parameters
+    const defaultParams: Record<string, any> = {
+      currency: currency === 'EUR' ? '€' : '$',
+    };
+
     return text.replace(/{([\w.]+)}/g, (match, path) => {
       // 1. Check in provided params
       if (params && params[path] !== undefined) {
         return String(params[path]);
       }
-      // 2. Fallback to translation dictionary (t) if path looks like a lookup
-      const value = path.split('.').reduce((acc: any, curr: string) => acc?.[curr], t);
+      
+      // 2. Check in default params
+      if (defaultParams[path] !== undefined) {
+        return String(defaultParams[path]);
+      }
+
+      // 3. Fallback to translation dictionary (t)
+      let value = path.split('.').reduce((acc: any, curr: string) => acc?.[curr], t);
+      
+      // 4. Handle Price Conversion (e.g. meetingPrice, reportPrice)
+      if (typeof value === 'string' && (path.toLowerCase().includes('price') || path.toLowerCase().includes('amount'))) {
+        const numValue = parseFloat(value);
+        if (!isNaN(numValue) && currency === 'EUR' && exchangeRates['EUR']) {
+          value = (numValue * exchangeRates['EUR']).toFixed(0);
+        }
+      }
+
       return typeof value === 'string' ? value : match;
     });
-  }, [t]);
+  }, [t, currency, exchangeRates]);
 
   // Initial detection and hydration
   useEffect(() => {

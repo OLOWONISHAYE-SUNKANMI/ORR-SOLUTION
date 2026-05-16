@@ -31,10 +31,10 @@ export function AuthSelectionToast({ isOpen, onClose, type }: AuthSelectionToast
           transition={{ type: 'spring', damping: 25, stiffness: 200 }}
           className="fixed top-24 right-4 z-[100] w-full max-w-sm"
         >
-          <div className="bg-[#1A1A1A] border border-white/10 rounded-2xl p-6 shadow-2xl relative overflow-hidden">
+          <div className="bg-card border border-white/10 rounded-2xl p-6 shadow-2xl relative overflow-hidden">
             {/* Background effects */}
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#13BE77] to-transparent"></div>
-            
+
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-white">
                 {type === 'login' ? interpolate((t.login as any)?.welcome || 'Welcome Back') : interpolate((t.login as any)?.register || 'Create an Account')}
@@ -53,16 +53,16 @@ export function AuthSelectionToast({ isOpen, onClose, type }: AuthSelectionToast
               <div onClick={() => {
                 // When clicking Google Button wrapper, we might also want to close, but the Google script handles the actual click.
               }}>
-                <GoogleButton 
+                <GoogleButton
                   onClick={() => {
                     signInWithGoogle();
                     onClose();
-                  }} 
+                  }}
                   isLoading={isGoogleLoading}
                   renderGoogleButton={renderGoogleButton}
                 />
               </div>
-              
+
               <div className="flex items-center my-4">
                 <div className="flex-1 border-t border-white/10"></div>
                 <span className="px-4 text-gray-400 text-xs">OR</span>

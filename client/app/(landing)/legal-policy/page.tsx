@@ -5,7 +5,7 @@ import Image from 'next/image';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useLanguage } from "@/app/components/LanguageProvider";
-
+import Chatbot from "@/components/shared/Chatbot";
 gsap.registerPlugin(ScrollTrigger);
 
 export default function LegacyPolicy() {
@@ -1137,6 +1137,7 @@ export default function LegacyPolicy() {
           </div>
         </div>
       </section>
+      <Chatbot />
     </div>
   );
 }

@@ -67,6 +67,7 @@ export default function Dashboard() {
     fetchBillingHistory: fetchWalletBillingHistory,
     transactions,
     fetchTransactions,
+    getDisplayBalance,
     isLoading: walletLoadingStore
   } = useWalletStore();
 
@@ -279,6 +280,121 @@ export default function Dashboard() {
                 </ResponsiveContainer>
               </div>
             </div>
+
+            {/* Financial & Activity Trends */}
+            <div className="space-y-4">
+              <h3 className="text-xl font-bold text-foreground">Insights & Activity</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Transaction Trends */}
+                <div className="bg-card border border-secondary rounded-xl p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h3 className="text-lg font-semibold text-foreground">Transaction Trends</h3>
+                      <p className="text-xs text-foreground opacity-60">Volume of financial activities</p>
+                    </div>
+                    <TrendingUp className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="h-48">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={(() => {
+                        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                        const now = new Date();
+                        const chartData = [];
+                        for (let i = 5; i >= 0; i--) {
+                          const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                          const monthIdx = d.getMonth();
+                          const year = d.getFullYear();
+                          const amount = Array.isArray(transactions) ? transactions
+                            .filter(tx => {
+                              const txd = new Date(tx.date);
+                              return txd.getMonth() === monthIdx && txd.getFullYear() === year;
+                            })
+                            .reduce((sum, tx) => sum + tx.amount, 0) : 0;
+                          chartData.push({ month: months[monthIdx], amount });
+                        }
+                        return chartData;
+                      })()}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-secondary)" vertical={false} />
+                        <XAxis dataKey="month" stroke="var(--color-foreground)" opacity={0.6} fontSize={10} />
+                        <YAxis stroke="var(--color-foreground)" opacity={0.6} fontSize={10} />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: 'var(--color-card)',
+                            border: '1px solid var(--color-secondary)',
+                            borderRadius: '8px'
+                          }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="amount"
+                          stroke="var(--color-primary)"
+                          strokeWidth={3}
+                          dot={{ fill: 'var(--color-primary)', r: 4 }}
+                          activeDot={{ r: 6, strokeWidth: 0 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Activity Frequency */}
+                <div className="bg-card border border-secondary rounded-xl p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h3 className="text-lg font-semibold text-foreground">Activity Frequency</h3>
+                      <p className="text-xs text-foreground opacity-60">Daily engagement levels</p>
+                    </div>
+                    <Clock className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="h-48">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={(() => {
+                        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                        const now = new Date();
+                        const chartData = [];
+                        for (let i = 6; i >= 0; i--) {
+                          const d = new Date(now);
+                          d.setDate(now.getDate() - i);
+                          const dayName = days[d.getDay()];
+                          
+                          // Count notifications for this day
+                          const dayStart = new Date(d.setHours(0, 0, 0, 0));
+                          const dayEnd = new Date(d.setHours(23, 59, 59, 999));
+                          
+                          const actualCount = Array.isArray(notifications) ? notifications.filter(n => {
+                            const nd = new Date(n.created_at);
+                            return nd >= dayStart && nd <= dayEnd;
+                          }).length : 0;
+
+                          // If no notifications, use a small mock number to keep the chart "alive" in dev
+                          const activityCount = actualCount > 0 ? actualCount : (process.env.NODE_ENV === 'development' ? Math.floor(Math.random() * 5) + 1 : 0);
+                          
+                          chartData.push({ day: dayName, activities: activityCount });
+                        }
+                        return chartData;
+                      })()}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-secondary)" vertical={false} />
+                        <XAxis dataKey="day" stroke="var(--color-foreground)" opacity={0.6} fontSize={10} />
+                        <YAxis stroke="var(--color-foreground)" opacity={0.6} fontSize={10} />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: 'var(--color-card)',
+                            border: '1px solid var(--color-secondary)',
+                            borderRadius: '8px'
+                          }}
+                        />
+                        <Bar
+                          dataKey="activities"
+                          fill="var(--color-primary)"
+                          opacity={0.8}
+                          radius={[4, 4, 0, 0]}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Sidebar */}
@@ -296,7 +412,7 @@ export default function Dashboard() {
                 <Skeleton width={100} height={40} className="mb-4" />
               ) : (
                 <p className="text-2xl font-bold mb-4 text-primary">
-                  {currency === 'EUR' ? '€' : '$'} {walletBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {currency === 'EUR' ? '€' : '$'} {getDisplayBalance().toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
               )}
               <button

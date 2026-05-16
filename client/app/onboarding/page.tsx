@@ -458,6 +458,9 @@ export default function OnboardingPage() {
     // This is a trade-off: localizing the OPTIONS themselves changes the value sent to backend.
     
     await submitOnboarding(onboardingData);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('orr-currency-dismissed', 'true');
+    }
   };
 
   const getCurrentAnswer = () => {

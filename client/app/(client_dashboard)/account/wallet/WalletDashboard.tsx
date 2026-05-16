@@ -22,6 +22,8 @@ export default function WalletDashboard() {
     fetchTransactions,
     fetchPaymentMethods,
     updateCurrency,
+    getDisplayBalance,
+    formatAmount,
     isLoading
   } = useWalletStore();
 
@@ -47,11 +49,10 @@ export default function WalletDashboard() {
     // We only show it if the currency from wallet balance is the default 'USD' 
     // AND onboarding status confirms it hasn't been set specifically yet.
     if (onboardingStatus && onboardingStatus.is_completed && !onboardingStatus.currency) {
-      // Check if we already showed it in this session to avoid being too intrusive
-      const hasPrompted = sessionStorage.getItem('orr-currency-prompted');
+      // Check if we already showed it to avoid being too intrusive
+      const hasPrompted = localStorage.getItem('orr-currency-dismissed');
       if (!hasPrompted) {
         setIsCurrencyModalOpen(true);
-        sessionStorage.setItem('orr-currency-prompted', 'true');
       }
     }
   }, [onboardingStatus]);
@@ -105,11 +106,15 @@ export default function WalletDashboard() {
                 <span>{interpolate(t.dashboard.account.wallet.balance)}</span>
               </div>
               <div className="text-5xl font-extrabold text-white tracking-tight flex items-baseline gap-2">
-                <span className="text-3xl text-[#22C55E] opacity-80">{currency}</span>
                 {isLoading ? (
                   <Skeleton width={120} height={40} className="mt-1" />
                 ) : (
-                  walletBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })
+                  <>
+                    <span className="text-3xl text-[#22C55E] opacity-80">
+                      {currency === 'EUR' ? '€' : '$'}
+                    </span>
+                    {getDisplayBalance().toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </>
                 )}
               </div>
               <p className="text-xs text-gray-400 flex items-center gap-1.5 pt-2">
@@ -238,7 +243,7 @@ export default function WalletDashboard() {
                       {(tx.reference_id || tx.id) && <span className="block text-[10px] opacity-50 font-mono mt-1">Ref: {tx.reference_id || tx.id}</span>}
                     </td>
                     <td className={`px-8 py-5 text-sm font-bold text-right ${tx.type === 'top_up' || tx.type === 'refund' ? 'text-green-400' : 'text-white'}`}>
-                      {tx.type === 'top_up' || tx.type === 'refund' ? '+' : '-'} {tx.currency} {Number(tx.amount).toFixed(2)}
+                      {tx.type === 'top_up' || tx.type === 'refund' ? '+' : '-'} {formatAmount(tx.amount)}
                     </td>
                     <td className="px-8 py-5 text-center">
                       <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase border ${getStatusColor(tx.status)}`}>
@@ -296,13 +301,17 @@ export default function WalletDashboard() {
 
       <CurrencySelectionModal
         isOpen={isCurrencyModalOpen}
-        onClose={() => setIsCurrencyModalOpen(false)}
+        onClose={() => {
+          setIsCurrencyModalOpen(false);
+          localStorage.setItem('orr-currency-dismissed', 'true');
+        }}
         isLoading={isCurrencyUpdating}
         onSelect={async (newCurrency) => {
           setIsCurrencyUpdating(true);
           const success = await updateCurrency(newCurrency);
           if (success) {
             setIsCurrencyModalOpen(false);
+            localStorage.setItem('orr-currency-dismissed', 'true');
           }
           setIsCurrencyUpdating(false);
         }}

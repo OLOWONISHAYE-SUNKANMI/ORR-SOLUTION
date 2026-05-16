@@ -21,7 +21,7 @@ interface TimeSlot {
 
 export default function MeetingRequestPage() {
   const { t, language: currentLang } = useLanguage();
-  
+
   const meetingTypes = [
     { id: "first_meeting", label: interpolate(t.dashboard.consultations.types.first_meeting) },
     { id: "discovery", label: interpolate(t.dashboard.consultations.types.discovery) },
@@ -74,7 +74,7 @@ export default function MeetingRequestPage() {
     try {
       const eventTypeUri = eventTypes.length > 0 ? encodeURIComponent(eventTypes[0].uri) : 'google-meet';
       const response = await axios.get(`/meeting-slots/?event_type_uri=${eventTypeUri}`);
-      
+
       const slots = response.data?.data?.collection || response.data?.collection || response.data || [];
       setMeetingSlots(Array.isArray(slots) ? slots : []);
     } catch (error) {
@@ -110,11 +110,11 @@ export default function MeetingRequestPage() {
       const slots = [];
       const now = new Date();
       const targetDate = new Date(date);
-      
+
       for (let hour = 9; hour <= 17; hour++) {
         const slotDate = new Date(targetDate);
         slotDate.setHours(hour, 0, 0, 0);
-        
+
         if (slotDate > now) {
           slots.push({
             start_time: slotDate.toISOString(),
@@ -144,19 +144,19 @@ export default function MeetingRequestPage() {
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
     const startingDayOfWeek = firstDay.getDay();
-    
+
     const days = [];
-    
+
     // Add empty cells for days before the first day of the month
     for (let i = 0; i < startingDayOfWeek; i++) {
       days.push(null);
     }
-    
+
     // Add all days of the month
     for (let day = 1; day <= daysInMonth; day++) {
       days.push(new Date(year, month, day));
     }
-    
+
     return days;
   };
 
@@ -192,23 +192,38 @@ export default function MeetingRequestPage() {
       return;
     }
 
-    const meetingData = {
+    const baseMeetingData = {
       meeting_type: selectedType as 'discovery' | 'first_meeting' | 'follow_up' | 'report_review',
       requested_datetime: selectedTimeSlot.start_time,
       agenda: agenda.trim(),
-      basic_context: basicContext.trim(),
-      goals: goals.trim(),
-      pain_points: painPoints.trim(),
       scheduling_url: eventTypes[0]?.uri || selectedTimeSlot.scheduling_url,
     };
 
     try {
-      const response = await axios.post('/create-meeting/', meetingData);
-      
+      const response = await axios.post('/create-meeting/', baseMeetingData);
+
       if (response.data?.success || response.status === 200 || response.status === 201) {
-        const realMeetingLink = response.data?.redirect_url || selectedTimeSlot.scheduling_url;
+        const meetingId = response.data?.data?.meeting_id ||
+          response.data?.meeting_id ||
+          response.data?.data?.id ||
+          response.data?.id ||
+          response.data?.meeting?.id;
+
+        if (meetingId) {
+          try {
+            await axios.patch(`/meeting-preform/${meetingId}`, {
+              basic_context: basicContext.trim(),
+              goals: goals.trim(),
+              pain_points: painPoints.trim(),
+            });
+          } catch (patchErr) {
+            console.error('Error submitting pre-meeting data:', patchErr);
+          }
+        }
+
+        const realMeetingLink = response.data?.redirect_url || response.data?.data?.redirect_url || selectedTimeSlot.scheduling_url;
         addToast('Meeting created successfully! Redirecting to Google Meet...', 'success');
-        
+
         // Clear form fields
         setSelectedType("discovery");
         setSelectedDate(null);
@@ -217,7 +232,7 @@ export default function MeetingRequestPage() {
         setBasicContext("");
         setGoals("");
         setPainPoints("");
-        
+
         // Open the REAL Google Meet link in new tab
         setTimeout(() => {
           window.open(realMeetingLink, '_blank');
@@ -243,7 +258,7 @@ export default function MeetingRequestPage() {
         </h1>
 
         {/* Search Box */}
-        <div className="flex items-center bg-card px-5 py-2 rounded-full w-[320px] gap-3 border border-secondary">
+        {/* <div className="flex items-center bg-card px-5 py-2 rounded-full w-[320px] gap-3 border border-secondary">
           <input
             type="text"
             placeholder={interpolate(t.dashboard.common.search)}
@@ -258,7 +273,7 @@ export default function MeetingRequestPage() {
             <circle cx="11" cy="11" r="7"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
-        </div>
+        </div> */}
       </div>
 
       {/* MAIN CARD */}
@@ -283,10 +298,9 @@ export default function MeetingRequestPage() {
                   setAgenda(meetingOverviews[type.id as keyof typeof meetingOverviews].agenda);
                 }}
                 className={`px-3 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all
-                  ${
-                    selectedType === type.id
-                      ? "bg-lemon text-background"
-                      : "bg-secondary text-foreground"
+                  ${selectedType === type.id
+                    ? "bg-lemon text-background"
+                    : "bg-secondary text-foreground"
                   }
                 `}
               >
@@ -326,7 +340,7 @@ export default function MeetingRequestPage() {
           {/* CALENDAR */}
           <div className="w-full lg:w-1/2">
             <div className="flex justify-between items-center mb-6">
-              <button 
+              <button
                 onClick={() => navigateMonth('prev')}
                 className="p-2.5 rounded-xl bg-white/5 hover:bg-primary hover:text-white transition-all border border-white/10"
               >
@@ -338,7 +352,7 @@ export default function MeetingRequestPage() {
                 <p className="text-[10px] text-primary uppercase tracking-[0.2em] font-bold">Select Date</p>
               </div>
 
-              <button 
+              <button
                 onClick={() => navigateMonth('next')}
                 className="p-2.5 rounded-xl bg-white/5 hover:bg-primary hover:text-white transition-all border border-white/10"
               >
@@ -373,14 +387,13 @@ export default function MeetingRequestPage() {
                     onClick={() => date && !isPast && setSelectedDate(date)}
                     disabled={!date || isPast}
                     className={`aspect-square flex items-center justify-center rounded-xl text-sm font-medium transition-all relative group
-                      ${
-                        !date
-                          ? "invisible"
-                          : isPast
+                      ${!date
+                        ? "invisible"
+                        : isPast
                           ? "text-white/20 cursor-not-allowed"
                           : isSelected
-                          ? "bg-primary text-white shadow-lg shadow-primary/30"
-                          : "bg-white/5 text-white hover:bg-white/10 border border-white/5"
+                            ? "bg-primary text-white shadow-lg shadow-primary/30"
+                            : "bg-white/5 text-white hover:bg-white/10 border border-white/5"
                       }
                     `}
                   >
@@ -400,8 +413,8 @@ export default function MeetingRequestPage() {
           {/* TIME SELECTION */}
           <div className="w-full md:w-1/2 pl-0 md:pl-8 border-t md:border-t-0 md:border-l border-white/10 flex flex-col">
             <div className="mb-6">
-               <h3 className="text-lg font-bold text-white">{formatSelectedDate(selectedDate)}</h3>
-               <p className="text-[10px] text-primary uppercase tracking-[0.2em] font-bold">Select Time</p>
+              <h3 className="text-lg font-bold text-white">{formatSelectedDate(selectedDate)}</h3>
+              <p className="text-[10px] text-primary uppercase tracking-[0.2em] font-bold">Select Time</p>
             </div>
 
             {loadingSlots ? (
@@ -418,20 +431,19 @@ export default function MeetingRequestPage() {
                       key={slot.start_time}
                       onClick={() => setSelectedTimeSlot(slot)}
                       className={`px-6 py-4 rounded-xl text-left transition-all border group
-                        ${
-                          isSelected
-                            ? "bg-primary border-primary text-white shadow-lg shadow-primary/20 scale-[1.02]"
-                            : "bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-white/20"
+                        ${isSelected
+                          ? "bg-primary border-primary text-white shadow-lg shadow-primary/20 scale-[1.02]"
+                          : "bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-white/20"
                         }
                       `}
                     >
                       <div className="flex items-center justify-between">
-                         <span className={`text-sm font-bold ${isSelected ? 'text-white' : 'text-gray-200'}`}>
-                           {formatTime(slot.start_time)}
-                         </span>
-                         <span className={`text-[10px] font-medium px-2 py-0.5 rounded ${isSelected ? 'bg-white/20' : 'bg-primary/10 text-primary'}`}>
-                           60 MIN
-                         </span>
+                        <span className={`text-sm font-bold ${isSelected ? 'text-white' : 'text-gray-200'}`}>
+                          {formatTime(slot.start_time)}
+                        </span>
+                        <span className={`text-[10px] font-medium px-2 py-0.5 rounded ${isSelected ? 'bg-white/20' : 'bg-primary/10 text-primary'}`}>
+                          60 MIN
+                        </span>
                       </div>
                     </button>
                   );
@@ -439,7 +451,7 @@ export default function MeetingRequestPage() {
                 {getTimeSlotsForDate(selectedDate).length === 0 && (
                   <div className="flex-1 flex flex-col items-center justify-center py-8 text-center">
                     <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center text-gray-500 mb-2">
-                       <ChevronRight size={24} />
+                      <ChevronRight size={24} />
                     </div>
                     <p className="text-sm text-gray-400">{interpolate(t.dashboard.consultations.book.noSlots)}</p>
                   </div>
@@ -502,10 +514,10 @@ export default function MeetingRequestPage() {
 
         {/* SUBMIT BUTTON */}
         <div className="flex justify-center mt-8">
-          <button 
+          <button
             onClick={handleSubmit}
             disabled={isLoading || !selectedTimeSlot}
-            className="px-10 py-2 bg-lemon text-background rounded-full font-semibold text-sm disabled:opacity-50"
+            className=" cursor-pointer px-10 py-2 bg-lemon text-background rounded-full font-semibold text-sm disabled:opacity-50"
           >
             {isLoading ? interpolate(t.dashboard.consultations.book.submitting) : interpolate(t.dashboard.consultations.book.submit)}
           </button>
