@@ -1,32 +1,57 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { use } from 'react';
 import DocumentViewerClient from './DocumentViewerClient';
-
-export const dynamic = 'force-static';
-export const dynamicParams = false;
-
-export function generateStaticParams() {
-  return [
-    { id: '1' },
-    { id: '2' },
-    { id: '3' },
-    { id: '5' },
-  ];
-}
+import { vaultApi, VaultDocument } from '@/lib/vault-api';
 
 interface PageProps {
   params: Promise<{ id: string }>;
 }
 
-const DOCUMENT_MAPPING: Record<string, { name: string, type: 'doc' | 'sheet' | 'slide' }> = {
-  '1': { name: 'Strategic Roadmap 2026', type: 'doc' },
-  '2': { name: 'Financial Projections Q3', type: 'sheet' },
-  '3': { name: 'Board Presentation - April', type: 'slide' },
-  '5': { name: 'Market Analysis - Global', type: 'doc' },
-};
-
-export default async function Page({ params }: PageProps) {
-  const { id } = await params;
-  const docInfo = DOCUMENT_MAPPING[id] || { name: 'Document', type: 'doc' };
+export default function Page({ params }: PageProps) {
+  const { id } = use(params);
+  const [document, setDocument] = useState<VaultDocument | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
-  return <DocumentViewerClient id={id} type={docInfo.type} name={docInfo.name} />;
+  useEffect(() => {
+    const fetchDoc = async () => {
+      try {
+        setLoading(true);
+        const doc = await vaultApi.getDocument(id);
+        setDocument(doc);
+      } catch (err) {
+        console.error('Failed to fetch document:', err);
+        setError('Document not found or access denied.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchDoc();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="h-screen bg-background flex flex-col animate-pulse">
+        <div className="h-16 bg-card/50 border-b border-white/10 px-6 flex items-center justify-between">
+          <div className="w-48 h-4 bg-white/10 rounded" />
+        </div>
+        <div className="flex-1 bg-white/5 m-10 rounded-3xl" />
+      </div>
+    );
+  }
+
+  if (error || !document) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-10 text-center">
+        <h1 className="text-2xl font-black text-white mb-4">Document Not Found</h1>
+        <p className="text-white/60 mb-8">{error || 'The document you are looking for might have been moved or deleted.'}</p>
+        <a href="/document" className="bg-primary text-black px-6 py-2 rounded-xl font-bold">Back to Vault</a>
+      </div>
+    );
+  }
+
+  return <DocumentViewerClient id={id} document={document} />;
 }

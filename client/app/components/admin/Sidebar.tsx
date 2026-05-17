@@ -66,6 +66,12 @@ const navigationItems: ItemType[] = [
     active: false,
     value: "schedule-meetings",
   },
+  {
+    icon: FileText,
+    label: "Document Vault",
+    active: false,
+    value: "vault",
+  },
 ];
 
 export default function Sidebar() {
