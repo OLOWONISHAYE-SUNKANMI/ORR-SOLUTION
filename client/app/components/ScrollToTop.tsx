@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { ChevronUp } from "lucide-react";
 
-export function ScrollToTop({ targetSelector }: { targetSelector?: string }) {
+export function ScrollToTop({ targetSelector, position = "left" }: { targetSelector?: string, position?: "left" | "right" }) {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -52,8 +52,10 @@ export function ScrollToTop({ targetSelector }: { targetSelector?: string }) {
     }
   };
 
+  const positionClass = position === "right" ? "right-10" : "left-10";
+
   return (
-    <div className={`fixed bottom-10 left-10 z-[999] transition-all duration-500 ${isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-10 scale-50 pointer-events-none'}`}>
+    <div className={`fixed bottom-10 ${positionClass} z-[999] transition-all duration-500 ${isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-10 scale-50 pointer-events-none'}`}>
       <button
         onClick={scrollToTop}
         className="w-16 h-16 bg-emerald-500 hover:bg-emerald-400 text-white rounded-full flex items-center justify-center shadow-[0_15px_35px_rgba(16,185,129,0.4)] transition-all hover:scale-110 active:scale-90 group border-2 border-white/30 backdrop-blur-sm"

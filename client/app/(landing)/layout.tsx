@@ -3,7 +3,7 @@ import { LandingFooter } from "../components/LandingFooter";
 import AnimatedBackground from "../../components/AnimatedBackground";
 import { CookieConsent } from "../components/CookieConsent";
 import { ScrollToTop } from "../components/ScrollToTop";
-import { FloatingLanguageToggle } from "../components/FloatingLanguageToggle";
+
 
 export default function LandingLayout({
   children,
@@ -14,7 +14,7 @@ export default function LandingLayout({
     <div className="min-h-screen flex flex-col relative overflow-hidden">
       <ScrollToTop />
       <LandingHeader />
-      <FloatingLanguageToggle />
+
       <AnimatedBackground />
       
       <main className="flex-1 star relative z-20">

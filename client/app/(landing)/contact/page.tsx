@@ -7,6 +7,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import api from "@/lib/axios";
 import Spinner from "../../../components/ui/Spinner";
 import { useLanguage } from "../../../app/components/LanguageProvider";
+import { getRichTextContent } from "@/lib/rich-text-utils";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -179,11 +180,21 @@ export default function Contact() {
     return <Spinner />;
   }
 
+  const getHtml = (field: any) => {
+    const text = getRichTextContent(field, language);
+    return typeof text === 'string' ? text : '';
+  };
+
+  const getPlain = (field: any) => {
+    const html = getHtml(field);
+    return html ? html.replace(/<[^>]*>?/gm, '') : '';
+  };
+
   const subjectOptions = [
-    data.subject_option_1?.content?.replace(/<[^>]*>/g, "") || t.contact.subjectGeneral,
-    data.subject_option_2?.content?.replace(/<[^>]*>/g, "") || t.contact.subjectGeneral,
-    data.subject_option_3?.content?.replace(/<[^>]*>/g, "") || t.contact.subjectGeneral,
-    data.subject_option_4?.content?.replace(/<[^>]*>/g, "") || t.contact.subjectGeneral,
+    getPlain(data.subject_option_1) || t.contact.subjectGeneral,
+    getPlain(data.subject_option_2) || t.contact.subjectGeneral,
+    getPlain(data.subject_option_3) || t.contact.subjectGeneral,
+    getPlain(data.subject_option_4) || t.contact.subjectGeneral,
   ];
 
   return (
@@ -197,7 +208,7 @@ export default function Contact() {
           >
             <span
               dangerouslySetInnerHTML={{
-                __html: data.hero_title?.content || t.contact.heroTitle,
+                __html: getHtml(data.hero_title) || t.contact.heroTitle,
               }}
             />
           </h1>
@@ -215,7 +226,7 @@ export default function Contact() {
             <h2 className="text-2xl sm:text-3xl font-bold mb-3">
               <span
                 dangerouslySetInnerHTML={{
-                  __html: data.contact_info_title?.content || t.contact.infoTitle,
+                  __html: getHtml(data.contact_info_title) || t.contact.infoTitle,
                 }}
               />
             </h2>
@@ -223,7 +234,7 @@ export default function Contact() {
               <span
                 dangerouslySetInnerHTML={{
                   __html:
-                    data.contact_info_subtitle?.content ||
+                    getHtml(data.contact_info_subtitle) ||
                     t.contact.infoSubtitle,
                 }}
               />
@@ -240,7 +251,7 @@ export default function Contact() {
                 <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
               </div>
               <p className="text-base sm:text-lg">
-                <span>{data.phone_number || t.contact.phoneDefault}</span>
+                <span>{getPlain(data.phone_number) || t.contact.phoneDefault}</span>
               </p>
             </div>
 
@@ -255,7 +266,7 @@ export default function Contact() {
                 <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
               </div>
               <p className="text-base sm:text-lg">
-                <span>{data.email_address || t.contact.emailDefault}</span>
+                <span>{getPlain(data.email_address) || t.contact.emailDefault}</span>
               </p>
             </div>
 
@@ -273,7 +284,7 @@ export default function Contact() {
                 <span
                   dangerouslySetInnerHTML={{
                     __html:
-                      data.address?.content ||
+                      getHtml(data.address) ||
                       t.contact.addressDefault,
                   }}
                 />
@@ -301,7 +312,7 @@ export default function Contact() {
                   >
                     <span
                       dangerouslySetInnerHTML={{
-                        __html: data.first_name_label?.content || t.contact.firstName,
+                        __html: getHtml(data.first_name_label) || t.contact.firstName,
                       }}
                     />
                   </label>
@@ -309,7 +320,7 @@ export default function Contact() {
                     type="text"
                     id="firstName"
                     placeholder={
-                      data.first_name_placeholder?.content?.replace(/<[^>]*>/g, "") ||
+                      getPlain(data.first_name_placeholder) ||
                       t.contact.firstNamePlaceholder
                     }
                     className="w-full bg-transparent border-b border-border text-foreground placeholder-foreground/40 focus:outline-none focus:border-primary transition-colors pb-2"
@@ -322,7 +333,7 @@ export default function Contact() {
                   >
                     <span
                       dangerouslySetInnerHTML={{
-                        __html: data.last_name_label?.content || t.contact.lastName,
+                        __html: getHtml(data.last_name_label) || t.contact.lastName,
                       }}
                     />
                   </label>
@@ -330,7 +341,7 @@ export default function Contact() {
                     type="text"
                     id="lastName"
                     placeholder={
-                      data.last_name_placeholder?.content?.replace(/<[^>]*>/g, "") ||
+                      getPlain(data.last_name_placeholder) ||
                       t.contact.lastNamePlaceholder
                     }
                     className="w-full bg-transparent border-b border-border text-foreground placeholder-foreground/40 focus:outline-none focus:border-primary transition-colors pb-2"
@@ -352,7 +363,7 @@ export default function Contact() {
                   >
                     <span
                       dangerouslySetInnerHTML={{
-                        __html: data.email_label?.content || t.contact.email,
+                        __html: getHtml(data.email_label) || t.contact.email,
                       }}
                     />
                   </label>
@@ -360,7 +371,7 @@ export default function Contact() {
                     type="email"
                     id="email"
                     placeholder={
-                      data.email_placeholder?.content?.replace(/<[^>]*>/g, "") ||
+                      getPlain(data.email_placeholder) ||
                       t.contact.emailPlaceholder
                     }
                     className="w-full bg-transparent border-b border-border text-foreground placeholder-foreground/40 focus:outline-none focus:border-primary transition-colors pb-2"
@@ -373,7 +384,7 @@ export default function Contact() {
                   >
                     <span
                       dangerouslySetInnerHTML={{
-                        __html: data.phone_label?.content || t.contact.phone,
+                        __html: getHtml(data.phone_label) || t.contact.phone,
                       }}
                     />
                   </label>
@@ -381,7 +392,7 @@ export default function Contact() {
                     type="tel"
                     id="phone"
                     placeholder={
-                      data.phone_placeholder?.content?.replace(/<[^>]*>/g, "") ||
+                      getPlain(data.phone_placeholder) ||
                       t.contact.phonePlaceholder
                     }
                     className="w-full bg-transparent border-b border-border text-foreground placeholder-foreground/40 focus:outline-none focus:border-primary transition-colors pb-2"
@@ -398,7 +409,7 @@ export default function Contact() {
                 <label className="block opacity-80 text-sm mb-4">
                   <span
                     dangerouslySetInnerHTML={{
-                      __html: data.subject_label?.content || t.contact.subject,
+                      __html: getHtml(data.subject_label) || t.contact.subject,
                     }}
                   />
                 </label>
@@ -431,14 +442,14 @@ export default function Contact() {
                 >
                   <span
                     dangerouslySetInnerHTML={{
-                      __html: data.message_label?.content || t.contact.message,
+                      __html: getHtml(data.message_label) || t.contact.message,
                     }}
                   />
                 </label>
                 <textarea
                   id="message"
                   placeholder={
-                    data.message_placeholder?.content?.replace(/<[^>]*>/g, "") ||
+                    getPlain(data.message_placeholder) ||
                     t.contact.messagePlaceholder
                   }
                   rows={1}
@@ -460,7 +471,7 @@ export default function Contact() {
                   >
                     <span
                       dangerouslySetInnerHTML={{
-                        __html: data.submit_button_text?.content || t.contact.submitButton,
+                        __html: getHtml(data.submit_button_text) || t.contact.submitButton,
                       }}
                     />
                   </button>

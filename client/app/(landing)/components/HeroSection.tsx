@@ -5,6 +5,7 @@ import { useTheme } from "../../components/ThemeProvider";
 import { useLanguage } from "../../components/LanguageProvider";
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { AuthSelectionToast } from "../../components/AuthSelectionToast";
 
 export function HeroSection() {
   const { theme } = useTheme();
@@ -14,6 +15,7 @@ export function HeroSection() {
   const [isMinimized, setIsMinimized] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [isFooterVisible, setIsFooterVisible] = useState(false);
+  const [authModalState, setAuthModalState] = useState<{isOpen: boolean, type: 'login' | 'register'}>({isOpen: false, type: 'register'});
 
   const sectionRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -113,12 +115,12 @@ export function HeroSection() {
               <h3 className={`text-white font-bold mb-3 text-center drop-shadow-lg tracking-tight ${isMinimized ? 'text-sm' : 'text-2xl md:text-5xl'}`}>
                 {interpolate(t.hero.joinNow)}
               </h3>
-              <Link
-                href="/register"
+              <button
+                onClick={() => setAuthModalState({ isOpen: true, type: 'register' })}
                 className={`bg-emerald-500 text-white font-bold rounded-full hover:bg-emerald-400 transition-all shadow-[0_0_20px_rgba(16,185,129,0.4)] active:scale-95 ${isMinimized ? 'px-4 py-1.5 text-xs' : 'px-10 py-4 text-xl'}`}
               >
                 {interpolate(t.hero.signUp)}
-              </Link>
+              </button>
             </motion.div>
           )}
         </AnimatePresence>
@@ -139,6 +141,11 @@ export function HeroSection() {
           </button>
         )}
       </motion.div>
+      <AuthSelectionToast 
+        isOpen={authModalState.isOpen} 
+        type={authModalState.type} 
+        onClose={() => setAuthModalState({ ...authModalState, isOpen: false })} 
+      />
       <style jsx>{`
         .animate-in {
           animation-duration: 500ms;

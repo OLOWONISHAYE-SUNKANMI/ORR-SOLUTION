@@ -222,7 +222,7 @@ export const en = {
         documents: 'Documents',
       },
       welcome: {
-        morning: 'Good morning!',
+        morning: 'Good morning{firstname}!',
         goals: "Ready to tackle today's goals?",
       },
       overview: {

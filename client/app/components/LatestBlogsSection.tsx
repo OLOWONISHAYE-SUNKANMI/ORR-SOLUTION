@@ -22,8 +22,10 @@ export default function LatestBlogsSection({ initialPosts }: { initialPosts?: an
     
     const fetchPosts = async () => {
       try {
-        // Fetch posts and take only the first 3
-        const allPosts = await client.fetch(postsQuery);
+        // Fetch posts from internal API route to bypass CORS
+        const response = await fetch('/api/sanity/posts');
+        if (!response.ok) throw new Error('Failed to fetch posts');
+        const allPosts = await response.json();
         setPosts(allPosts.slice(0, 3));
       } catch (error) {
         console.error("Error fetching latest posts:", error);
