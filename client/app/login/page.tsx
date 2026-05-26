@@ -207,8 +207,8 @@ export default function Page() {
           <div className="mt-8">
             <Separator text="OR" />
             <div className="mt-6">
-              <GoogleButton 
-                onClick={signInWithGoogle} 
+              <GoogleButton
+                onClick={signInWithGoogle}
                 isLoading={isGoogleLoading}
                 renderGoogleButton={renderGoogleButton}
               />

@@ -391,14 +391,14 @@ export default function DocumentViewerClient({ id, document }: { id: string, doc
   const [input, setInput] = useState('');
   const [accessStatus, setAccessStatus] = useState<'idle' | 'requesting' | 'pending' | 'granted'>('idle');
 
-  // Simulate loading
+  // Fetch document client-side
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 1000);
     return () => clearTimeout(timer);
   }, []);
 
   const handleSendMessage = () => {
-    if (!input.trim()) return;
+    if (!input.trim() || !document) return;
     const newMessages = [...messages, { role: 'user', content: input }];
     setMessages(newMessages);
     setInput('');
@@ -512,6 +512,19 @@ export default function DocumentViewerClient({ id, document }: { id: string, doc
   if (loading) {
     return <DocumentSkeleton />;
   }
+
+  if (error || !document) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-10 text-center">
+        <h1 className="text-2xl font-black text-white mb-4">Document Not Found</h1>
+        <p className="text-white/60 mb-8">{error || 'The document you are looking for might have been moved or deleted.'}</p>
+        <Link href="/document" className="bg-primary text-black px-6 py-2 rounded-xl font-bold">Back to Vault</Link>
+      </div>
+    );
+  }
+
+  const config = getDocConfig(document);
+  const name = document.name;
 
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
