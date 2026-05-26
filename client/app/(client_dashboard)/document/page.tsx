@@ -42,6 +42,94 @@ import { clsx } from 'clsx';
 import { vaultApi, VaultDocument, VaultFolder } from '@/lib/vault-api';
 import { AuthService } from '@/lib/auth';
 
+const WordLogo = ({ className, size = 20 }: { className?: string, size?: number }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+  >
+    <path d="M14.5 1H4.75A2.25 2.25 0 0 0 2.5 3.25v17.5A2.25 2.25 0 0 0 4.75 23h14.5A2.25 2.25 0 0 0 21.5 20.75V8L14.5 1Z" fill="#0F4C81"/>
+    <path d="M14.5 1V8H21.5L14.5 1Z" fill="#3B82F6"/>
+    <path d="M7.5 11.5L9.2 17L10.8 11.5H12.2L13.8 17L15.5 11.5H17.2L14.7 18.5H13L11.5 13.5L10 18.5H8.3L5.8 11.5H7.5Z" fill="white"/>
+  </svg>
+);
+
+const ExcelLogo = ({ className, size = 20 }: { className?: string, size?: number }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+  >
+    <path d="M14.5 1H4.75A2.25 2.25 0 0 0 2.5 3.25v17.5A2.25 2.25 0 0 0 4.75 23h14.5A2.25 2.25 0 0 0 21.5 20.75V8L14.5 1Z" fill="#107C41"/>
+    <path d="M14.5 1V8H21.5L14.5 1Z" fill="#33C481"/>
+    <path d="M7 11.5L9.25 15L7 18.5H8.75L10.1 16.25L11.45 18.5H13.2L10.95 15L13.2 11.5H11.45L10.1 13.75L8.75 11.5H7Z" fill="white"/>
+  </svg>
+);
+
+const PowerPointLogo = ({ className, size = 20 }: { className?: string, size?: number }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+  >
+    <path d="M14.5 1H4.75A2.25 2.25 0 0 0 2.5 3.25v17.5A2.25 2.25 0 0 0 4.75 23h14.5A2.25 2.25 0 0 0 21.5 20.75V8L14.5 1Z" fill="#C43E1C"/>
+    <path d="M14.5 1V8H21.5L14.5 1Z" fill="#F97316"/>
+    <path d="M9 11.5H11.5C12.3 11.5 13 12.2 13 13C13 13.8 12.3 14.5 11.5 14.5H10.2V16.5H9V11.5ZM10.2 13.3H11.5C11.7 13.3 11.8 13.2 11.8 13C11.8 12.8 11.7 12.7 11.5 12.7H10.2V13.3Z" fill="white" />
+  </svg>
+);
+
+const PdfLogo = ({ className, size = 20 }: { className?: string, size?: number }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+  >
+    <path d="M14.5 1H4.75A2.25 2.25 0 0 0 2.5 3.25v17.5A2.25 2.25 0 0 0 4.75 23h14.5A2.25 2.25 0 0 0 21.5 20.75V8L14.5 1Z" fill="#B91C1C"/>
+    <path d="M14.5 1V8H21.5L14.5 1Z" fill="#EF4444"/>
+    <path d="M9 11.5H10.5C11.3 11.5 12 12.2 12 13C12 13.8 11.3 14.5 10.5 14.5H10.2V16.5H9V11.5ZM10.2 13.3H10.5C10.7 13.3 10.8 13.2 10.8 13C10.8 12.8 10.7 12.7 10.5 12.7H10.2V13.3Z" fill="white" />
+  </svg>
+);
+
+const getFileLogo = (type: string, size = 20) => {
+  const normalized = type.toLowerCase().replace(/^\./, '');
+  if (['sheet', 'xlsx', 'xls'].includes(normalized)) {
+    return <ExcelLogo size={size} />;
+  }
+  if (['slide', 'pptx', 'ppt'].includes(normalized)) {
+    return <PowerPointLogo size={size} />;
+  }
+  if (['pdf'].includes(normalized)) {
+    return <PdfLogo size={size} />;
+  }
+  return <WordLogo size={size} />;
+};
+
+const getFileColorClass = (type: string) => {
+  const normalized = type.toLowerCase().replace(/^\./, '');
+  if (['sheet', 'xlsx', 'xls'].includes(normalized)) {
+    return 'text-green-400';
+  }
+  if (['slide', 'pptx', 'ppt'].includes(normalized)) {
+    return 'text-orange-400';
+  }
+  if (['pdf'].includes(normalized)) {
+    return 'text-red-400';
+  }
+  return 'text-blue-400';
+};
+
 export default function DocumentWorkspace() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
@@ -476,8 +564,8 @@ export default function DocumentWorkspace() {
 // --- SUBCOMPONENTS ---
 
 function FileCard({ file, onClick, isActive, onShare }: { file: any, onClick: () => void, isActive?: boolean, onShare: (e: React.MouseEvent) => void }) {
-  const Icon = file.type === 'sheet' ? FileSpreadsheet : file.type === 'slide' ? Presentation : FileText;
-  const colorClass = file.type === 'sheet' ? 'text-green-400' : file.type === 'slide' ? 'text-orange-400' : 'text-blue-400';
+  const logo = getFileLogo(file.type, 32);
+  const colorClass = getFileColorClass(file.type);
 
   return (
     <motion.div 
@@ -495,7 +583,7 @@ function FileCard({ file, onClick, isActive, onShare }: { file: any, onClick: ()
       )}
 
       <div className={clsx("w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mb-6", colorClass)}>
-        <Icon size={32} />
+        {logo}
       </div>
 
       <div className="space-y-4">
@@ -505,6 +593,8 @@ function FileCard({ file, onClick, isActive, onShare }: { file: any, onClick: ()
             <span>{file.project || 'WORKSPACE'}</span>
             <span className="w-1 h-1 rounded-full bg-white/20" />
             <span>{file.category || 'GENERAL'}</span>
+            <span className="w-1 h-1 rounded-full bg-white/20" />
+            <span className="text-primary font-black">.{file.type}</span>
           </div>
         </div>
 
@@ -534,8 +624,8 @@ function FileCard({ file, onClick, isActive, onShare }: { file: any, onClick: ()
 }
 
 function FileRow({ file, onClick, isActive, showFull = true, onShare }: { file: any, onClick: () => void, isActive?: boolean, showFull?: boolean, onShare: (e: React.MouseEvent) => void }) {
-  const Icon = file.type === 'sheet' ? FileSpreadsheet : file.type === 'slide' ? Presentation : FileText;
-  const colorClass = file.type === 'sheet' ? 'text-green-400' : file.type === 'slide' ? 'text-orange-400' : 'text-blue-400';
+  const logo = getFileLogo(file.type, 20);
+  const colorClass = getFileColorClass(file.type);
 
   return (
     <tr 
@@ -548,11 +638,12 @@ function FileRow({ file, onClick, isActive, showFull = true, onShare }: { file: 
       <td className="py-4 px-6">
         <div className="flex items-center gap-4">
           <div className={clsx("w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center", colorClass)}>
-            <Icon size={20} />
+            {logo}
           </div>
           <div>
             <div className="text-white font-bold flex items-center gap-2">
               {file.name}
+              <span className="text-[9px] bg-white/5 px-1.5 py-0.5 rounded border border-white/10 text-primary font-black uppercase">{file.type}</span>
               {file.locked && <Lock size={12} className="text-orange-400" />}
             </div>
             <div className="text-white/40 text-xs uppercase tracking-wider font-black">{file.size}</div>
@@ -751,9 +842,9 @@ function GeminiSummaryPanel({ file, onClose, onOpen, onShare }: { file: any, onC
           <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
             <div className="text-white font-bold text-sm mb-1">{file.name}</div>
             <div className="flex items-center gap-2 text-[10px] text-white/30 font-black uppercase tracking-wider">
-              <span>{file.type}</span>
+              <span className="text-primary font-black uppercase">{file.type}</span>
               <span className="w-1 h-1 rounded-full bg-white/20" />
-              <span>{file.size}</span>
+              <span>Size: {file.size}</span>
             </div>
           </div>
         </section>
