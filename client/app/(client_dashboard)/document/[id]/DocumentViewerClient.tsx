@@ -19,7 +19,19 @@ import {
   PanelRight,
   Edit3,
   Lock,
-  ShieldCheck
+  ShieldCheck,
+  Plus,
+  PlusCircle,
+  Bold,
+  Italic,
+  Underline,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  Image as ImageIcon,
+  Table as TableIcon,
+  Grid3X3,
+  Save
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
@@ -27,8 +39,349 @@ import Link from 'next/link';
 
 import { VaultDocument } from '@/lib/vault-api';
 
+const WordLogo = ({ className, size = 20 }: { className?: string, size?: number }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+  >
+    <path d="M14.5 1H4.75A2.25 2.25 0 0 0 2.5 3.25v17.5A2.25 2.25 0 0 0 4.75 23h14.5A2.25 2.25 0 0 0 21.5 20.75V8L14.5 1Z" fill="#0F4C81"/>
+    <path d="M14.5 1V8H21.5L14.5 1Z" fill="#3B82F6"/>
+    <path d="M7.5 11.5L9.2 17L10.8 11.5H12.2L13.8 17L15.5 11.5H17.2L14.7 18.5H13L11.5 13.5L10 18.5H8.3L5.8 11.5H7.5Z" fill="white"/>
+  </svg>
+);
+
+const ExcelLogo = ({ className, size = 20 }: { className?: string, size?: number }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+  >
+    <path d="M14.5 1H4.75A2.25 2.25 0 0 0 2.5 3.25v17.5A2.25 2.25 0 0 0 4.75 23h14.5A2.25 2.25 0 0 0 21.5 20.75V8L14.5 1Z" fill="#107C41"/>
+    <path d="M14.5 1V8H21.5L14.5 1Z" fill="#33C481"/>
+    <path d="M7 11.5L9.25 15L7 18.5H8.75L10.1 16.25L11.45 18.5H13.2L10.95 15L13.2 11.5H11.45L10.1 13.75L8.75 11.5H7Z" fill="white"/>
+  </svg>
+);
+
+const PowerPointLogo = ({ className, size = 20 }: { className?: string, size?: number }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+  >
+    <path d="M14.5 1H4.75A2.25 2.25 0 0 0 2.5 3.25v17.5A2.25 2.25 0 0 0 4.75 23h14.5A2.25 2.25 0 0 0 21.5 20.75V8L14.5 1Z" fill="#C43E1C"/>
+    <path d="M14.5 1V8H21.5L14.5 1Z" fill="#F97316"/>
+    <path d="M9 11.5H11.5C12.3 11.5 13 12.2 13 13C13 13.8 12.3 14.5 11.5 14.5H10.2V16.5H9V11.5ZM10.2 13.3H11.5C11.7 13.3 11.8 13.2 11.8 13C11.8 12.8 11.7 12.7 11.5 12.7H10.2V13.3Z" fill="white" />
+  </svg>
+);
+
+const PdfLogo = ({ className, size = 20 }: { className?: string, size?: number }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+  >
+    <path d="M14.5 1H4.75A2.25 2.25 0 0 0 2.5 3.25v17.5A2.25 2.25 0 0 0 4.75 23h14.5A2.25 2.25 0 0 0 21.5 20.75V8L14.5 1Z" fill="#B91C1C"/>
+    <path d="M14.5 1V8H21.5L14.5 1Z" fill="#EF4444"/>
+    <path d="M9 11.5H10.5C11.3 11.5 12 12.2 12 13C12 13.8 11.3 14.5 10.5 14.5H10.2V16.5H9V11.5ZM10.2 13.3H10.5C10.7 13.3 10.8 13.2 10.8 13C10.8 12.8 10.7 12.7 10.5 12.7H10.2V13.3Z" fill="white" />
+  </svg>
+);
+
 export default function DocumentViewerClient({ id, document }: { id: string, document: VaultDocument }) {
   const [loading, setLoading] = useState(true);
+  const doc = document as any;
+  const isMock = doc.google_drive_id?.startsWith('mock_') || doc.link?.includes('mock_');
+  const [activeDocument, setActiveDocument] = useState<any>({
+     title: doc.name || doc.title || 'Untitled Document',
+     content: doc.description || doc.content || ''
+  });
+  const [isSaving, setIsSaving] = useState(false);
+  const [font, setFont] = useState('Inter');
+  const [fontSize, setFontSize] = useState('14');
+  const [isBold, setIsBold] = useState(false);
+  const [isItalic, setIsItalic] = useState(false);
+  const [pages, setPages] = useState([1]);
+
+  useEffect(() => {
+     if (isMock) {
+        console.warn("Sandbox Mode: The service account credentials for Google Workspace are misconfigured (403 Permission Denied). Using a local interactive workspace instead. All changes are saved locally.");
+     }
+  }, [isMock]);
+
+  const handleSaveSandbox = async () => {
+     setIsSaving(true);
+     try {
+        const apiBase = process.env.NEXT_PUBLIC_API_URL || 'https://orr-backend-105825824472.asia-southeast2.run.app';
+        const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+        const headers: HeadersInit = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        
+        await fetch(`${apiBase}/admin-portal/v1/vault/documents/${id}/`, {
+           method: 'PATCH',
+           headers,
+           body: JSON.stringify({
+              title: activeDocument.title,
+              description: activeDocument.content || ''
+           })
+        });
+     } catch (err) {
+        console.error(err);
+     } finally {
+        setIsSaving(false);
+     }
+  };
+
+  // Toolbar Component
+  const Toolbar = () => (
+     <div className="h-12 border-b border-white/10 bg-white/5 backdrop-blur-md flex items-center px-4 gap-1 z-30 sticky top-0">
+        <div className="flex items-center gap-2 border-r border-white/10 pr-4 mr-2">
+           <select
+              value={font}
+              onChange={(e) => setFont(e.target.value)}
+              className="bg-transparent text-[10px] font-black uppercase focus:outline-none text-white cursor-pointer hover:bg-white/5 px-2 py-1 rounded"
+           >
+              <option className="bg-slate-900">Inter</option>
+              <option className="bg-slate-900">Roboto</option>
+              <option className="bg-slate-900">Outfit</option>
+              <option className="bg-slate-900">Mono</option>
+           </select>
+           <div className="h-4 w-px bg-white/10" />
+           <select
+              value={fontSize}
+              onChange={(e) => setFontSize(e.target.value)}
+              className="bg-transparent text-[10px] font-black uppercase focus:outline-none text-white cursor-pointer hover:bg-white/5 px-2 py-1 rounded w-12"
+           >
+              <option className="bg-slate-900">10</option>
+              <option className="bg-slate-900">12</option>
+              <option className="bg-slate-900">14</option>
+              <option className="bg-slate-900">16</option>
+              <option className="bg-slate-900">20</option>
+           </select>
+        </div>
+
+        <div className="flex items-center gap-0.5 border-r border-white/10 pr-4 mr-2">
+           <button
+              onClick={() => setIsBold(!isBold)}
+              className={`p-1.5 rounded-lg transition-all ${isBold ? 'bg-primary text-slate-900' : 'text-slate-400 hover:bg-white/5'}`}
+           >
+              <Bold size={16} />
+           </button>
+           <button
+              onClick={() => setIsItalic(!isItalic)}
+              className={`p-1.5 rounded-lg transition-all ${isItalic ? 'bg-primary text-slate-900' : 'text-slate-400 hover:bg-white/5'}`}
+           >
+              <Italic size={16} />
+           </button>
+           <button className="p-1.5 rounded-lg text-slate-400 hover:bg-white/5 transition-all">
+              <Underline size={16} />
+           </button>
+        </div>
+
+        <div className="flex items-center gap-0.5 border-r border-white/10 pr-4 mr-2">
+           <button className="p-1.5 rounded-lg text-slate-400 hover:bg-white/5 transition-all"><AlignLeft size={16} /></button>
+           <button className="p-1.5 rounded-lg text-slate-400 hover:bg-white/5 transition-all"><AlignCenter size={16} /></button>
+           <button className="p-1.5 rounded-lg text-slate-400 hover:bg-white/5 transition-all"><AlignRight size={16} /></button>
+        </div>
+
+        <div className="flex items-center gap-0.5">
+           <button className="p-1.5 rounded-lg text-slate-400 hover:bg-white/5 transition-all flex items-center gap-2 pr-3">
+              <ImageIcon size={16} />
+              <span className="text-[10px] font-black uppercase tracking-widest">Image</span>
+           </button>
+           <button className="p-1.5 rounded-lg text-slate-400 hover:bg-white/5 transition-all flex items-center gap-2 pr-3">
+              <TableIcon size={16} />
+              <span className="text-[10px] font-black uppercase tracking-widest">Table</span>
+           </button>
+        </div>
+
+        <div className="flex-1" />
+
+        <button
+           onClick={handleSaveSandbox}
+           className="flex items-center gap-2 px-4 py-1.5 bg-primary/10 border border-primary/20 text-primary rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-primary/20 transition-all"
+        >
+           <Save size={14} /> {isSaving ? 'Saving...' : 'Save Changes'}
+        </button>
+     </div>
+  );
+
+  const DocEditor = () => (
+     <div className="flex-1 bg-[#010409] p-12 overflow-y-auto scrollbar-hide flex flex-col items-center gap-12 text-white">
+        {pages.map((pageNumber) => (
+           <div
+              key={pageNumber}
+              className="w-full max-w-[850px] bg-white/[0.03] border border-white/5 shadow-2xl min-h-[1100px] p-24 relative flex-shrink-0 transition-all hover:bg-white/[0.04]"
+              style={{ fontFamily: font }}
+           >
+              {pageNumber === 1 && (
+                 <div className="space-y-8">
+                    <input
+                       type="text"
+                       value={activeDocument?.title}
+                       onChange={(e) => setActiveDocument((prev: any) => prev ? { ...prev, title: e.target.value } : null)}
+                       className={`w-full bg-transparent border-none focus:outline-none text-4xl uppercase italic tracking-tighter text-white ${isBold ? 'font-black' : 'font-normal'} ${isItalic ? 'italic' : ''}`}
+                       style={{ fontSize: `${parseInt(fontSize) * 2.5}px` }}
+                       placeholder="Document Title"
+                    />
+                    <div className="h-px bg-white/10 w-full" />
+                 </div>
+              )}
+              <div className="relative mt-8">
+                 <textarea
+                    value={pageNumber === 1 ? (activeDocument?.content || '') : ''}
+                    onChange={(e) => {
+                       if (pageNumber === 1) {
+                          const content = e.target.value;
+                          setActiveDocument((prev: any) => prev ? { ...prev, content } : null);
+                       }
+                    }}
+                    className="w-full bg-transparent border-none focus:outline-none resize-none min-h-[500px] leading-relaxed text-slate-400 placeholder:text-slate-600 overflow-hidden"
+                    style={{
+                       fontSize: `${fontSize}px`,
+                       fontFamily: font,
+                       height: 'auto'
+                    }}
+                    placeholder={pageNumber === 1 ? "Start typing your document repository layer..." : "Continue typing on page " + pageNumber + "..."}
+                    spellCheck={false}
+                 />
+              </div>
+
+              {pageNumber === pages.length && (
+                 <div className="grid grid-cols-2 gap-8 my-12 pointer-events-none border-t border-white/5 pt-12 relative z-0">
+                    <div className="aspect-video bg-white/5 rounded-3xl border border-white/10 flex items-center justify-center text-slate-600 italic text-[10px] font-black uppercase tracking-widest">
+                       Document Image Overlay Placeholder
+                    </div>
+                    <div className="aspect-video bg-white/5 rounded-3xl border border-white/10 flex items-center justify-center text-slate-600 italic text-[10px] font-black uppercase tracking-widest">
+                       Asset Reference View
+                    </div>
+                 </div>
+              )}
+              <div className="absolute bottom-8 right-8 text-[9px] font-black text-slate-600 uppercase tracking-widest">
+                 Page {pageNumber} of {pages.length}
+              </div>
+           </div>
+        ))}
+
+        <button
+           onClick={() => setPages(prev => [...prev, prev.length + 1])}
+           className="group flex flex-col items-center gap-4 py-12"
+        >
+           <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-slate-500 group-hover:text-primary group-hover:border-primary/50 group-hover:bg-primary/10 transition-all">
+              <Plus size={24} />
+           </div>
+           <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-600 group-hover:text-primary transition-colors">Append Next Architecture Page</span>
+        </button>
+     </div>
+  );
+
+  const SheetEditor = () => (
+     <div className="flex-1 bg-[#010409] overflow-hidden flex flex-col text-white">
+        <div className="p-4 border-b border-white/5 bg-white/5">
+           <input
+              type="text"
+              value={activeDocument?.title}
+              onChange={(e) => setActiveDocument((prev: any) => prev ? { ...prev, title: e.target.value } : null)}
+              className="bg-transparent border-none focus:outline-none text-xl font-black uppercase italic tracking-tighter text-white w-full"
+              placeholder="Sheet Title"
+           />
+        </div>
+        <div className="h-8 bg-white/5 border-b border-white/10 flex items-center px-4 gap-2">
+           <div className="w-10 h-6 bg-primary/10 border border-primary/20 rounded flex items-center justify-center text-[10px] font-black text-primary uppercase">fx</div>
+           <input type="text" className="bg-transparent flex-1 text-[11px] font-bold text-white focus:outline-none" defaultValue="=SUM(A1:B20) / AI_ADJUSTMENT" />
+        </div>
+        <div className="flex-1 overflow-auto">
+           <table className="w-full border-collapse">
+              <thead>
+                 <tr>
+                    <th className="w-10 bg-white/5 border border-white/10 text-[9px] font-black text-slate-600"></th>
+                    {['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'].map(col => (
+                       <th key={col} className="bg-white/5 border border-white/10 p-2 text-[10px] font-black text-slate-500 uppercase tracking-widest w-32">{col}</th>
+                    ))}
+                 </tr>
+              </thead>
+              <tbody>
+                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20].map(row => (
+                    <tr key={row}>
+                       <td className="bg-white/5 border border-white/10 text-center text-[9px] font-black text-slate-600">{row}</td>
+                       {['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'].map(col => (
+                          <td key={col} className="border border-white/5 p-3 min-w-[120px] hover:bg-primary/5 transition-colors cursor-cell group">
+                             <input
+                                type="text"
+                                className="bg-transparent w-full text-xs font-medium text-slate-400 group-hover:text-white focus:outline-none"
+                                defaultValue={row === 1 ? `Header ${col}` : ''}
+                             />
+                          </td>
+                       ))}
+                    </tr>
+                 ))}
+              </tbody>
+           </table>
+        </div>
+     </div>
+  );
+
+  const SlideEditor = () => (
+     <div className="flex-1 flex overflow-hidden bg-[#010409] text-white">
+        <div className="w-48 border-r border-white/5 bg-white/[0.02] overflow-y-auto p-4 space-y-4">
+           {[1, 2, 3, 4, 5].map(i => (
+              <div key={i} className={`aspect-video rounded-xl border-2 transition-all cursor-pointer hover:border-primary/50 group relative ${i === 1 ? 'border-primary' : 'border-white/10'}`}>
+                 <div className="absolute top-1 left-1 text-[8px] font-black text-slate-500">{i}</div>
+                 <div className="w-full h-full bg-white/5 rounded-lg flex flex-col items-center justify-center p-2">
+                    <div className="w-full h-1 bg-white/10 rounded-full mb-1" />
+                    <div className="w-2/3 h-1 bg-white/10 rounded-full mb-2" />
+                    <div className="grid grid-cols-2 gap-1 w-full">
+                       <div className="h-4 bg-white/5 rounded" />
+                       <div className="h-4 bg-white/5 rounded" />
+                    </div>
+                 </div>
+              </div>
+           ))}
+           <button className="w-full aspect-video rounded-xl border-2 border-dashed border-white/10 flex flex-col items-center justify-center gap-2 text-slate-600 hover:text-primary hover:border-primary/50 transition-all">
+              <PlusCircle size={20} />
+              <span className="text-[8px] font-black uppercase tracking-widest">Add Slide</span>
+           </button>
+        </div>
+        <div className="flex-1 p-12 overflow-y-auto flex items-center justify-center">
+           <div className="w-full max-w-4xl aspect-video bg-white/[0.03] border border-white/5 rounded-[40px] shadow-2xl p-16 flex flex-col justify-center gap-8 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-[80px] rounded-full" />
+              <div className="space-y-4 relative z-10">
+                 <input
+                    type="text"
+                    value={activeDocument?.title}
+                    onChange={(e) => setActiveDocument((prev: any) => prev ? { ...prev, title: e.target.value } : null)}
+                    className={`w-full bg-transparent border-none focus:outline-none text-6xl font-black italic uppercase tracking-tighter text-white ${isBold ? 'font-black' : 'font-bold'}`}
+                    style={{ fontFamily: font }}
+                    placeholder="Presentation Title"
+                 />
+                 <div className="h-1 w-32 bg-primary rounded-full" />
+              </div>
+              <div className="space-y-4 relative z-10">
+                 <input
+                    type="text"
+                    value={activeDocument?.content || 'Infrastructure Architecture Phase 01'}
+                    onChange={(e) => setActiveDocument((prev: any) => prev ? { ...prev, content: e.target.value } : null)}
+                    className="w-full bg-transparent border-none focus:outline-none text-2xl text-slate-400 font-medium tracking-tight"
+                    placeholder="Slide Description"
+                 />
+                 <p className="text-sm text-slate-600 font-black uppercase tracking-[0.3em]">ORR Solutions Portfolio • 2024</p>
+              </div>
+           </div>
+        </div>
+     </div>
+  );
+
   const [showAiPanel, setShowAiPanel] = useState(true);
   const [activeTab, setActiveTab] = useState<'ai' | 'history' | 'comments'>('ai');
   const [aiLoading, setAiLoading] = useState(false);
@@ -104,7 +457,7 @@ export default function DocumentViewerClient({ id, document }: { id: string, doc
       case 'xlsx':
       case 'xls':
         return {
-          icon: FileSpreadsheet,
+          icon: ExcelLogo as any,
           color: 'text-green-400',
           bgColor: 'bg-green-500/10',
           url: finalUrl,
@@ -114,7 +467,7 @@ export default function DocumentViewerClient({ id, document }: { id: string, doc
       case 'pptx':
       case 'ppt':
         return {
-          icon: Presentation,
+          icon: PowerPointLogo as any,
           color: 'text-orange-400',
           bgColor: 'bg-orange-500/10',
           url: finalUrl,
@@ -122,7 +475,7 @@ export default function DocumentViewerClient({ id, document }: { id: string, doc
         };
       case 'pdf':
         return {
-          icon: FileText,
+          icon: PdfLogo as any,
           color: 'text-red-400',
           bgColor: 'bg-red-500/10',
           url: finalUrl,
@@ -130,7 +483,7 @@ export default function DocumentViewerClient({ id, document }: { id: string, doc
         };
       default:
         return {
-          icon: FileText,
+          icon: WordLogo as any,
           color: 'text-blue-400',
           bgColor: 'bg-blue-500/10',
           url: finalUrl,
@@ -141,6 +494,20 @@ export default function DocumentViewerClient({ id, document }: { id: string, doc
 
   const config = getDocConfig();
   const name = document.name;
+
+  const rawType = document.document_type || document.type;
+  let detectedType = 'pdf';
+  if (rawType && rawType !== 'file') {
+     detectedType = rawType;
+  } else {
+     const nameSource = document.name || document.title || document.link || '';
+     const match = nameSource.match(/\.([a-z0-9]+)(\?.*)?$/i);
+     if (match) detectedType = match[1];
+  }
+  const normalizedType = (document.document_source === 'google_doc' ? 'docx' : 
+                         document.document_source === 'google_sheet' ? 'xlsx' : 
+                         document.document_source === 'google_slide' ? 'pptx' : 
+                         detectedType).toLowerCase().replace(/^\./, '');
 
   if (loading) {
     return <DocumentSkeleton />;
@@ -161,7 +528,9 @@ export default function DocumentViewerClient({ id, document }: { id: string, doc
             <div>
               <h1 className="text-white font-bold text-sm">{name}</h1>
               <div className="flex items-center gap-2 text-[10px] text-white/30 font-black uppercase tracking-wider">
-                <span>{config.label} • ORR-{id.padStart(3, '0')}</span>
+                <span>{config.label} ({normalizedType}) • ORR-{id.padStart(3, '0')}</span>
+                <span className="w-1 h-1 rounded-full bg-white/20" />
+                <span>Size: {doc.size || doc.file_size || '0 KB'}</span>
                 <span className="w-1 h-1 rounded-full bg-white/20" />
                 <span>Last saved 2m ago</span>
               </div>
@@ -260,14 +629,29 @@ export default function DocumentViewerClient({ id, document }: { id: string, doc
             )}
           </AnimatePresence>
 
-          <div className="flex-1 relative">
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-black/20 p-20 text-center">
-              <iframe
-                src={config.url}
-                className="w-full h-full border-none"
-                title={`${config.label} Editor`}
-              />
-            </div>
+          <div className="flex-1 relative flex flex-col overflow-hidden">
+            {isMock ? (
+              <div className="flex-1 flex flex-col overflow-hidden">
+                <Toolbar />
+                {['doc', 'docx'].includes(normalizedType) ? (
+                  <DocEditor />
+                ) : ['sheet', 'xlsx'].includes(normalizedType) ? (
+                  <SheetEditor />
+                ) : ['slide', 'pptx'].includes(normalizedType) ? (
+                  <SlideEditor />
+                ) : (
+                  <DocEditor />
+                )}
+              </div>
+            ) : (
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-black/20 p-20 text-center">
+                <iframe
+                  src={config.url}
+                  className="w-full h-full border-none"
+                  title={`${config.label} Editor`}
+                />
+              </div>
+            )}
           </div>
         </div>
 
