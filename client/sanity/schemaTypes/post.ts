@@ -19,6 +19,11 @@ export const post = defineType({
       validation: (rule) => rule.required(),
     }),
     defineField({
+      name: 'author',
+      title: 'Author',
+      type: 'string',
+    }),
+    defineField({
       name: 'badge',
       title: 'Badge',
       type: 'localizedString',
@@ -29,6 +34,20 @@ export const post = defineType({
       title: 'Main Image',
       type: 'image',
       options: {hotspot: true},
+    }),
+    defineField({
+      name: 'tags',
+      title: 'Tags / Categories',
+      type: 'array',
+      of: [{type: 'string'}],
+      options: {
+        layout: 'tags'
+      }
+    }),
+    defineField({
+      name: 'readingTime',
+      title: 'Reading Time (minutes)',
+      type: 'number',
     }),
     defineField({
       name: 'body',
@@ -58,5 +77,11 @@ export const post = defineType({
       type: 'datetime',
       initialValue: () => new Date().toISOString(),
     }),
+    defineField({
+      name: 'seo',
+      title: 'SEO Metadata',
+      type: 'seo',
+    }),
   ],
 })
+

@@ -25,10 +25,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
 import Link from 'next/link';
 
-import { VaultDocument } from '@/lib/vault-api';
+import { vaultApi, VaultDocument } from '@/lib/vault-api';
 
-export default function DocumentViewerClient({ id, document }: { id: string, document: VaultDocument }) {
+export default function DocumentViewerClient({ id }: { id: string }) {
+  const [document, setDocument] = useState<VaultDocument | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showAiPanel, setShowAiPanel] = useState(true);
   const [activeTab, setActiveTab] = useState<'ai' | 'history' | 'comments'>('ai');
   const [aiLoading, setAiLoading] = useState(false);
@@ -38,14 +40,26 @@ export default function DocumentViewerClient({ id, document }: { id: string, doc
   const [input, setInput] = useState('');
   const [accessStatus, setAccessStatus] = useState<'idle' | 'requesting' | 'pending' | 'granted'>('idle');
 
-  // Simulate loading
+  // Fetch document client-side
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 1000);
-    return () => clearTimeout(timer);
-  }, []);
+    const fetchDoc = async () => {
+      try {
+        setLoading(true);
+        const doc = await vaultApi.getDocument(id);
+        setDocument(doc);
+      } catch (err) {
+        console.error('Failed to fetch document:', err);
+        setError('Document not found or access denied.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchDoc();
+  }, [id]);
 
   const handleSendMessage = () => {
-    if (!input.trim()) return;
+    if (!input.trim() || !document) return;
     const newMessages = [...messages, { role: 'user', content: input }];
     setMessages(newMessages);
     setInput('');
@@ -66,23 +80,23 @@ export default function DocumentViewerClient({ id, document }: { id: string, doc
     }, 2000);
   };
 
-  const getDocConfig = () => {
-    let rawType = document.document_type || document.type;
+  const getDocConfig = (doc: VaultDocument) => {
+    let rawType = doc.document_type || doc.type;
     
     // If type is missing, try to detect from title or link
     if (!rawType || rawType === 'file') {
-      const nameSource = document.name || document.title || document.link || '';
+      const nameSource = doc.name || doc.title || doc.link || '';
       const match = nameSource.match(/\.([a-z0-9]+)(\?.*)?$/i);
       if (match) rawType = match[1];
     }
     
     const type = (rawType || 'pdf').toLowerCase().replace(/^\./, '');
-    const normalizedType = document.document_source === 'google_doc' ? 'docx' : 
-                          document.document_source === 'google_sheet' ? 'xlsx' : 
-                          document.document_source === 'google_slide' ? 'pptx' : 
+    const normalizedType = doc.document_source === 'google_doc' ? 'docx' : 
+                          doc.document_source === 'google_sheet' ? 'xlsx' : 
+                          doc.document_source === 'google_slide' ? 'pptx' : 
                           type;
 
-    let link = document.link;
+    let link = doc.link;
     
     // Ensure absolute URL for local files
     const apiBase = process.env.NEXT_PUBLIC_API_URL || 'https://orr-backend-105825824472.asia-southeast2.run.app';
@@ -92,7 +106,7 @@ export default function DocumentViewerClient({ id, document }: { id: string, doc
 
     // Use Google Docs Viewer for Office files if it's a direct file link (not a Google Native Doc)
     const isOffice = ['docx', 'doc', 'xlsx', 'xls', 'pptx', 'ppt'].includes(normalizedType);
-    const isGoogleNative = document.document_source?.startsWith('google_') || (link && link.includes('docs.google.com'));
+    const isGoogleNative = doc.document_source?.startsWith('google_') || (link && link.includes('docs.google.com'));
     
     let finalUrl = link;
     if (isOffice && !isGoogleNative && link) {
@@ -139,12 +153,22 @@ export default function DocumentViewerClient({ id, document }: { id: string, doc
     }
   };
 
-  const config = getDocConfig();
-  const name = document.name;
-
   if (loading) {
     return <DocumentSkeleton />;
   }
+
+  if (error || !document) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-10 text-center">
+        <h1 className="text-2xl font-black text-white mb-4">Document Not Found</h1>
+        <p className="text-white/60 mb-8">{error || 'The document you are looking for might have been moved or deleted.'}</p>
+        <Link href="/document" className="bg-primary text-black px-6 py-2 rounded-xl font-bold">Back to Vault</Link>
+      </div>
+    );
+  }
+
+  const config = getDocConfig(document);
+  const name = document.name;
 
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
