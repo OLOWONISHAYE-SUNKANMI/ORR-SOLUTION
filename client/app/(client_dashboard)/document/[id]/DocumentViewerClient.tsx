@@ -37,7 +37,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
 import Link from 'next/link';
 
-import { VaultDocument } from '@/lib/vault-api';
+import { vaultApi, VaultDocument } from '@/lib/vault-api';
+import { useToastStore } from '@/store/toastStore';
 
 const WordLogo = ({ className, size = 20 }: { className?: string, size?: number }) => (
   <svg
@@ -102,11 +103,13 @@ const PdfLogo = ({ className, size = 20 }: { className?: string, size?: number }
 export default function DocumentViewerClient({ id }: { id: string }) {
   const [document, setDocument] = useState<VaultDocument | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const doc = document as any;
-  const isMock = doc.google_drive_id?.startsWith('mock_') || doc.link?.includes('mock_');
+  const isMock = doc?.google_drive_id?.startsWith('mock_') || doc?.link?.includes('mock_');
   const [activeDocument, setActiveDocument] = useState<any>({
-    title: doc.name || doc.title || 'Untitled Document',
-    content: doc.description || doc.content || ''
+    title: doc?.name || doc?.title || 'Untitled Document',
+    content: doc?.description || doc?.content || ''
   });
   const [isSaving, setIsSaving] = useState(false);
   const [font, setFont] = useState('Inter');
@@ -116,8 +119,35 @@ export default function DocumentViewerClient({ id }: { id: string }) {
   const [pages, setPages] = useState([1]);
 
   useEffect(() => {
+    const fetchDoc = async () => {
+      try {
+        setLoading(true);
+        const docData = await vaultApi.getDocument(id);
+        setDocument(docData);
+      } catch (err) {
+        console.error('Failed to fetch document:', err);
+        setError('Document not found or access denied.');
+        useToastStore.getState().addToast('Failed to fetch document or access denied.', 'error');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchDoc();
+  }, [id]);
+
+  useEffect(() => {
+    if (document) {
+      setActiveDocument({
+        title: document.name || (document as any).title || 'Untitled Document',
+        content: (document as any).description || (document as any).content || ''
+      });
+    }
+  }, [document]);
+
+  useEffect(() => {
     if (isMock) {
-      console.warn("Sandbox Mode: The service account credentials for Google Workspace are misconfigured (403 Permission Denied). Using a local interactive workspace instead. All changes are saved locally.");
+      useToastStore.getState().addToast("Sandbox Mode: Using a local interactive workspace instead of Google Workspace.", "info");
     }
   }, [isMock]);
 
@@ -137,8 +167,10 @@ export default function DocumentViewerClient({ id }: { id: string }) {
           description: activeDocument.content || ''
         })
       });
+      useToastStore.getState().addToast('Changes saved successfully!', 'success');
     } catch (err) {
       console.error(err);
+      useToastStore.getState().addToast('Failed to save changes.', 'error');
     } finally {
       setIsSaving(false);
     }
@@ -420,39 +452,39 @@ export default function DocumentViewerClient({ id }: { id: string }) {
     }, 2000);
   };
 
-  const getDocConfig = () => {
-    let rawType = document.document_type || document.type;
-
+  const getDocConfig = (doc: VaultDocument) => {
+    let rawType = doc.document_type || doc.type;
+ 
     // If type is missing, try to detect from title or link
     if (!rawType || rawType === 'file') {
-      const nameSource = document.name || document.title || document.link || '';
+      const nameSource = doc.name || doc.title || doc.link || '';
       const match = nameSource.match(/\.([a-z0-9]+)(\?.*)?$/i);
       if (match) rawType = match[1];
     }
-
+ 
     const type = (rawType || 'pdf').toLowerCase().replace(/^\./, '');
-    const normalizedType = document.document_source === 'google_doc' ? 'docx' :
-      document.document_source === 'google_sheet' ? 'xlsx' :
-        document.document_source === 'google_slide' ? 'pptx' :
+    const normalizedType = doc.document_source === 'google_doc' ? 'docx' :
+      doc.document_source === 'google_sheet' ? 'xlsx' :
+        doc.document_source === 'google_slide' ? 'pptx' :
           type;
-
-    let link = document.link;
-
+ 
+    let link = doc.link;
+ 
     // Ensure absolute URL for local files
     const apiBase = process.env.NEXT_PUBLIC_API_URL || 'https://orr-backend-105825824472.asia-southeast2.run.app';
     if (link && !link.startsWith('http')) {
       link = `${apiBase}${link}`;
     }
-
+ 
     // Use Google Docs Viewer for Office files if it's a direct file link (not a Google Native Doc)
     const isOffice = ['docx', 'doc', 'xlsx', 'xls', 'pptx', 'ppt'].includes(normalizedType);
-    const isGoogleNative = document.document_source?.startsWith('google_') || (link && link.includes('docs.google.com'));
-
+    const isGoogleNative = doc.document_source?.startsWith('google_') || (link && link.includes('docs.google.com'));
+ 
     let finalUrl = link;
     if (isOffice && !isGoogleNative && link) {
       finalUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(link)}&embedded=true`;
     }
-
+ 
     switch (normalizedType) {
       case 'sheet':
       case 'xlsx':
@@ -493,23 +525,6 @@ export default function DocumentViewerClient({ id }: { id: string }) {
     }
   };
 
-  const config = getDocConfig();
-  const name = document.name;
-
-  const rawType = document.document_type || document.type;
-  let detectedType = 'pdf';
-  if (rawType && rawType !== 'file') {
-    detectedType = rawType;
-  } else {
-    const nameSource = document.name || document.title || document.link || '';
-    const match = nameSource.match(/\.([a-z0-9]+)(\?.*)?$/i);
-    if (match) detectedType = match[1];
-  }
-  const normalizedType = (document.document_source === 'google_doc' ? 'docx' :
-    document.document_source === 'google_sheet' ? 'xlsx' :
-      document.document_source === 'google_slide' ? 'pptx' :
-        detectedType).toLowerCase().replace(/^\./, '');
-
   if (loading) {
     return <DocumentSkeleton />;
   }
@@ -526,6 +541,20 @@ export default function DocumentViewerClient({ id }: { id: string }) {
 
   const config = getDocConfig(document);
   const name = document.name;
+
+  const rawType = document.document_type || document.type;
+  let detectedType = 'pdf';
+  if (rawType && rawType !== 'file') {
+    detectedType = rawType;
+  } else {
+    const nameSource = document.name || document.title || document.link || '';
+    const match = nameSource.match(/\.([a-z0-9]+)(\?.*)?$/i);
+    if (match) detectedType = match[1];
+  }
+  const normalizedType = (document.document_source === 'google_doc' ? 'docx' :
+    document.document_source === 'google_sheet' ? 'xlsx' :
+      document.document_source === 'google_slide' ? 'pptx' :
+        detectedType).toLowerCase().replace(/^\./, '');
 
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
@@ -658,11 +687,12 @@ export default function DocumentViewerClient({ id }: { id: string }) {
                 )}
               </div>
             ) : (
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-black/20 p-20 text-center">
+              <div className="absolute inset-0 w-full h-full bg-[#010409]">
                 <iframe
                   src={config.url}
-                  className="w-full h-full border-none"
-                  title={`${config.label} Editor`}
+                  className="w-full h-full border-none bg-white"
+                  title={`${config.label} Viewer`}
+                  allowFullScreen
                 />
               </div>
             )}

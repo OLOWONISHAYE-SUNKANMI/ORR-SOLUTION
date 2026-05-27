@@ -41,6 +41,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
 import { vaultApi, VaultDocument, VaultFolder } from '@/lib/vault-api';
 import { useAuthStore } from '@/store/authStore';
+import { useToastStore } from '@/store/toastStore';
 
 const WordLogo = ({ className, size = 20 }: { className?: string, size?: number }) => (
   <svg 
@@ -244,7 +245,7 @@ export default function DocumentWorkspace() {
   const handleCreateDocument = async (title: string, docType: 'google_doc' | 'google_sheet' | 'google_slide' = 'google_doc') => {
     const clientId = getClientId();
     if (!clientId) {
-      alert("Session expired. Please log out and log in again.");
+      useToastStore.getState().addToast("Session expired. Please log out and log in again.", "error");
       return;
     }
     
@@ -253,10 +254,11 @@ export default function DocumentWorkspace() {
       setShowCreateModal(false);
       await vaultApi.createGoogleDoc(title, clientId, docType, currentFolderId);
       await fetchDocuments();
+      useToastStore.getState().addToast(`Successfully created ${docType === 'google_doc' ? 'Document' : docType === 'google_sheet' ? 'Spreadsheet' : 'Presentation'}`, "success");
     } catch (error: any) {
       console.error(`Failed to create ${docType}:`, error);
       const msg = error?.response?.data?.error || error?.message || 'Error creating document.';
-      alert(msg);
+      useToastStore.getState().addToast(msg, "error");
     } finally {
       setIsUploading(false);
     }
@@ -278,7 +280,7 @@ export default function DocumentWorkspace() {
   const handleCreateFolder = async (name: string) => {
     const clientId = getClientId();
     if (!clientId) {
-      alert("Session expired. Please log out and log in again.");
+      useToastStore.getState().addToast("Session expired. Please log out and log in again.", "error");
       return;
     }
     
@@ -287,10 +289,11 @@ export default function DocumentWorkspace() {
       setShowCreateModal(false);
       await vaultApi.createFolder(name, currentFolderId, clientId);
       await fetchDocuments();
+      useToastStore.getState().addToast(`Successfully created folder "${name}"`, "success");
     } catch (error: any) {
       console.error('Failed to create folder:', error);
       const msg = error?.response?.data?.error || error?.message || 'Error creating folder.';
-      alert(msg);
+      useToastStore.getState().addToast(msg, "error");
     } finally {
       setIsUploading(false);
     }
@@ -307,7 +310,7 @@ export default function DocumentWorkspace() {
 
     const clientId = getClientId();
     if (!clientId) {
-      alert("Session expired. Please log out and log in again.");
+      useToastStore.getState().addToast("Session expired. Please log out and log in again.", "error");
       return;
     }
 
@@ -332,10 +335,10 @@ export default function DocumentWorkspace() {
       }
       
       await fetchDocuments();
-      alert(`Successfully uploaded ${fileList.length} file(s)`);
+      useToastStore.getState().addToast(`Successfully uploaded ${fileList.length} file(s)`, "success");
     } catch (error: any) {
       console.error('Failed to upload file:', error);
-      alert(error?.response?.data?.error || "Error uploading file(s).");
+      useToastStore.getState().addToast(error?.response?.data?.error || "Error uploading file(s).", "error");
     } finally {
       setIsUploading(false);
       e.target.value = '';
@@ -348,7 +351,7 @@ export default function DocumentWorkspace() {
 
     const clientId = getClientId();
     if (!clientId) {
-      alert("Session expired. Please log out and log in again.");
+      useToastStore.getState().addToast("Session expired. Please log out and log in again.", "error");
       return;
     }
 
@@ -398,10 +401,10 @@ export default function DocumentWorkspace() {
       }
       
       await fetchDocuments();
-      alert(`Successfully uploaded folder hierarchy with ${fileList.length} file(s)`);
+      useToastStore.getState().addToast(`Successfully uploaded folder hierarchy with ${fileList.length} file(s)`, "success");
     } catch (error) {
       console.error('Failed to upload folder:', error);
-      alert("Error uploading folder.");
+      useToastStore.getState().addToast("Error uploading folder.", "error");
     } finally {
       setIsUploading(false);
       e.target.value = '';
