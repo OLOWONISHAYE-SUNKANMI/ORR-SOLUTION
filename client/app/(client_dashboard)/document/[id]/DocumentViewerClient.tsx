@@ -394,21 +394,9 @@ export default function DocumentViewerClient({ id }: { id: string }) {
 
   // Fetch document client-side
   useEffect(() => {
-    const fetchDoc = async () => {
-      try {
-        setLoading(true);
-        const doc = await vaultApi.getDocument(id);
-        setDocument(doc);
-      } catch (err) {
-        console.error('Failed to fetch document:', err);
-        setError('Document not found or access denied.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDoc();
-  }, [id]);
+    const timer = setTimeout(() => setLoading(false), 1000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleSendMessage = () => {
     if (!input.trim() || !document) return;
@@ -432,23 +420,23 @@ export default function DocumentViewerClient({ id }: { id: string }) {
     }, 2000);
   };
 
-  const getDocConfig = (doc: VaultDocument) => {
-    let rawType = doc.document_type || doc.type;
+  const getDocConfig = () => {
+    let rawType = document.document_type || document.type;
 
     // If type is missing, try to detect from title or link
     if (!rawType || rawType === 'file') {
-      const nameSource = doc.name || doc.title || doc.link || '';
+      const nameSource = document.name || document.title || document.link || '';
       const match = nameSource.match(/\.([a-z0-9]+)(\?.*)?$/i);
       if (match) rawType = match[1];
     }
 
     const type = (rawType || 'pdf').toLowerCase().replace(/^\./, '');
-    const normalizedType = doc.document_source === 'google_doc' ? 'docx' :
-      doc.document_source === 'google_sheet' ? 'xlsx' :
-        doc.document_source === 'google_slide' ? 'pptx' :
+    const normalizedType = document.document_source === 'google_doc' ? 'docx' :
+      document.document_source === 'google_sheet' ? 'xlsx' :
+        document.document_source === 'google_slide' ? 'pptx' :
           type;
 
-    let link = doc.link;
+    let link = document.link;
 
     // Ensure absolute URL for local files
     const apiBase = process.env.NEXT_PUBLIC_API_URL || 'https://orr-backend-105825824472.asia-southeast2.run.app';
@@ -458,7 +446,7 @@ export default function DocumentViewerClient({ id }: { id: string }) {
 
     // Use Google Docs Viewer for Office files if it's a direct file link (not a Google Native Doc)
     const isOffice = ['docx', 'doc', 'xlsx', 'xls', 'pptx', 'ppt'].includes(normalizedType);
-    const isGoogleNative = doc.document_source?.startsWith('google_') || (link && link.includes('docs.google.com'));
+    const isGoogleNative = document.document_source?.startsWith('google_') || (link && link.includes('docs.google.com'));
 
     let finalUrl = link;
     if (isOffice && !isGoogleNative && link) {

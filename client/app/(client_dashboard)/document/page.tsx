@@ -40,7 +40,7 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
 import { vaultApi, VaultDocument, VaultFolder } from '@/lib/vault-api';
-import { AuthService } from '@/lib/auth';
+import { useAuthStore } from '@/store/authStore';
 
 const WordLogo = ({ className, size = 20 }: { className?: string, size?: number }) => (
   <svg 
@@ -104,10 +104,10 @@ const PdfLogo = ({ className, size = 20 }: { className?: string, size?: number }
 
 const getFileLogo = (type: string, size = 20) => {
   const normalized = type.toLowerCase().replace(/^\./, '');
-  if (['sheet', 'xlsx', 'xls'].includes(normalized)) {
+  if (['sheet', 'xlsx', 'xls', 'google_sheet'].includes(normalized)) {
     return <ExcelLogo size={size} />;
   }
-  if (['slide', 'pptx', 'ppt'].includes(normalized)) {
+  if (['slide', 'pptx', 'ppt', 'google_slide'].includes(normalized)) {
     return <PowerPointLogo size={size} />;
   }
   if (['pdf'].includes(normalized)) {
@@ -118,10 +118,10 @@ const getFileLogo = (type: string, size = 20) => {
 
 const getFileColorClass = (type: string) => {
   const normalized = type.toLowerCase().replace(/^\./, '');
-  if (['sheet', 'xlsx', 'xls'].includes(normalized)) {
+  if (['sheet', 'xlsx', 'xls', 'google_sheet'].includes(normalized)) {
     return 'text-green-400';
   }
-  if (['slide', 'pptx', 'ppt'].includes(normalized)) {
+  if (['slide', 'pptx', 'ppt', 'google_slide'].includes(normalized)) {
     return 'text-orange-400';
   }
   if (['pdf'].includes(normalized)) {
@@ -148,8 +148,22 @@ export default function DocumentWorkspace() {
   const [folders, setFolders] = useState<VaultFolder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const authService = AuthService.getInstance();
-  const user = authService.getUser();
+  // Use Zustand store for authenticated user data (most reliable source)
+  const user = useAuthStore(state => state.user);
+
+  // Helper: resolve client_id from all available sources
+  const getClientId = (): number | null => {
+    if (user?.client_id) return user.client_id;
+    // Fall back to localStorage user_data (populated by AuthService during login)
+    try {
+      const stored = typeof window !== 'undefined' ? localStorage.getItem('user_data') : null;
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed?.client_id) return parsed.client_id;
+      }
+    } catch {}
+    return null;
+  };
 
   useEffect(() => {
     fetchDocuments();
@@ -158,14 +172,24 @@ export default function DocumentWorkspace() {
   const fetchDocuments = async () => {
     try {
       setIsLoading(true);
-      const [docsData, foldersData] = await Promise.all([
-        vaultApi.getDocuments(),
-        vaultApi.getFolders()
-      ]);
-      setFiles(docsData);
-      setFolders(foldersData);
-    } catch (error) {
-      console.error('Failed to fetch documents:', error);
+      
+      let docsData: any[] = [];
+      let foldersData: any[] = [];
+      
+      try {
+        docsData = await vaultApi.getDocuments();
+      } catch (err) {
+        console.error('Failed to fetch documents:', err);
+      }
+      
+      try {
+        foldersData = await vaultApi.getFolders();
+      } catch (err) {
+        console.error('Failed to fetch folders:', err);
+      }
+      
+      setFiles(docsData || []);
+      setFolders(foldersData || []);
     } finally {
       setIsLoading(false);
     }
@@ -187,14 +211,19 @@ export default function DocumentWorkspace() {
   }, [currentFolderId, currentFolder]);
 
   const filteredFolders = folders.filter(f => {
-     const isChild = !currentFolderId ? !f.parent : f.parent?.toString() === currentFolderId.toString();
-     return isChild && f.name.toLowerCase().includes(searchQuery.toLowerCase());
+     const matchesSearch = f.name?.toLowerCase().includes(searchQuery.toLowerCase());
+     // Only filter by parent if there's no active search
+     const matchesFolder = (f.parent?.toString() || null) === (currentFolderId?.toString() || null);
+     return searchQuery ? matchesSearch : (matchesSearch && matchesFolder);
   });
 
   const filteredFiles = Array.isArray(files) ? files.filter(f => {
-     const matchesSearch = f.name.toLowerCase().includes(searchQuery.toLowerCase());
-     const matchesFolder = !currentFolderId ? !f.folder_id && !f.folder : (f.folder_id?.toString() === currentFolderId.toString() || f.folder?.toString() === currentFolderId.toString());
-     return matchesSearch && matchesFolder;
+     const matchesSearch = f.name?.toLowerCase().includes(searchQuery.toLowerCase());
+     // Check both folder and folder_id, normalize to string or null
+     const fileFolderId = f.folder?.toString() || f.folder_id?.toString() || null;
+     // If at root, show all files. Otherwise, filter by folder.
+     const matchesFolder = currentFolderId ? (fileFolderId === currentFolderId.toString()) : true;
+     return searchQuery ? matchesSearch : (matchesSearch && matchesFolder);
   }) : [];
 
   const handleFileClick = (file: any) => {
@@ -212,30 +241,59 @@ export default function DocumentWorkspace() {
     setIsCreateDropdownOpen(!isCreateDropdownOpen);
   };
 
-  const handleCreateGoogleDoc = async (title: string) => {
-    if (!user?.client_id && !user?.admin_id) {
-      alert("User profile not found. Please log in again.");
+  const handleCreateDocument = async (title: string, docType: 'google_doc' | 'google_sheet' | 'google_slide' = 'google_doc') => {
+    const clientId = getClientId();
+    if (!clientId) {
+      alert("Session expired. Please log out and log in again.");
       return;
     }
     
     try {
       setIsUploading(true);
-      const clientId = user.client_id || 1; // Fallback for testing
-      const newDoc = await vaultApi.createGoogleDoc(title, clientId, 'google_doc', currentFolderId);
-      await fetchDocuments();
       setShowCreateModal(false);
-      alert(`Created Google Doc: ${newDoc.title}`);
-    } catch (error) {
-      console.error('Failed to create Google Doc:', error);
-      alert("Error creating document.");
+      await vaultApi.createGoogleDoc(title, clientId, docType, currentFolderId);
+      await fetchDocuments();
+    } catch (error: any) {
+      console.error(`Failed to create ${docType}:`, error);
+      const msg = error?.response?.data?.error || error?.message || 'Error creating document.';
+      alert(msg);
     } finally {
       setIsUploading(false);
     }
   };
 
+  // Alias for backwards compat with CreateModal
+  const handleCreateGoogleDoc = (title: string) => handleCreateDocument(title, 'google_doc');
+
   const handleUploadClick = () => {
     document.getElementById('file-upload-input')?.click();
     setIsCreateDropdownOpen(false);
+  };
+
+  const handleFolderUploadClick = () => {
+    document.getElementById('folder-upload-input')?.click();
+    setIsCreateDropdownOpen(false);
+  };
+
+  const handleCreateFolder = async (name: string) => {
+    const clientId = getClientId();
+    if (!clientId) {
+      alert("Session expired. Please log out and log in again.");
+      return;
+    }
+    
+    try {
+      setIsUploading(true);
+      setShowCreateModal(false);
+      await vaultApi.createFolder(name, currentFolderId, clientId);
+      await fetchDocuments();
+    } catch (error: any) {
+      console.error('Failed to create folder:', error);
+      const msg = error?.response?.data?.error || error?.message || 'Error creating folder.';
+      alert(msg);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleShare = (file: any) => {
@@ -243,15 +301,110 @@ export default function DocumentWorkspace() {
     setShowShareModal(true);
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fileList = e.target.files;
+    if (!fileList || fileList.length === 0) return;
+
+    const clientId = getClientId();
+    if (!clientId) {
+      alert("Session expired. Please log out and log in again.");
+      return;
+    }
+
+    try {
       setIsUploading(true);
-      // Mock upload process for now
-      setTimeout(() => {
-        setIsUploading(false);
-        alert(`Successfully uploaded ${files.length} file(s)`);
-      }, 2000);
+      
+      for (let i = 0; i < fileList.length; i++) {
+        const file = fileList[i];
+        const formData = new FormData();
+        formData.append('title', file.name.split('.')[0] || file.name);
+        formData.append('document', file);
+        formData.append('client', clientId!.toString());
+        formData.append('category', 'GENERAL');
+        formData.append('visibility', 'client');
+        formData.append('document_source', 'file');
+        
+        if (currentFolderId) {
+          formData.append('folder', currentFolderId.toString());
+        }
+        
+        await vaultApi.uploadDocument(formData);
+      }
+      
+      await fetchDocuments();
+      alert(`Successfully uploaded ${fileList.length} file(s)`);
+    } catch (error: any) {
+      console.error('Failed to upload file:', error);
+      alert(error?.response?.data?.error || "Error uploading file(s).");
+    } finally {
+      setIsUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleFolderUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fileList = e.target.files;
+    if (!fileList || fileList.length === 0) return;
+
+    const clientId = getClientId();
+    if (!clientId) {
+      alert("Session expired. Please log out and log in again.");
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      const createdFoldersMap: Record<string, string> = {};
+      
+      for (let i = 0; i < fileList.length; i++) {
+        const file = fileList[i];
+        const path = (file as any).webkitRelativePath || '';
+        const pathParts = path.split('/');
+        pathParts.pop(); // remove filename
+        
+        let parentId = currentFolderId;
+        
+        if (pathParts.length > 0) {
+          let currentRelativePath = '';
+          for (const folderName of pathParts) {
+            currentRelativePath = currentRelativePath 
+              ? `${currentRelativePath}/${folderName}` 
+              : folderName;
+              
+            if (createdFoldersMap[currentRelativePath]) {
+              parentId = createdFoldersMap[currentRelativePath];
+            } else {
+              const newFolder = await vaultApi.createFolder(folderName, parentId, clientId);
+              const newFolderId = newFolder.id;
+              createdFoldersMap[currentRelativePath] = newFolderId;
+              parentId = newFolderId;
+            }
+          }
+        }
+        
+        const formData = new FormData();
+        formData.append('title', file.name.split('.')[0] || file.name);
+        formData.append('document', file);
+        formData.append('client', clientId.toString());
+        formData.append('category', 'GENERAL');
+        formData.append('visibility', 'client');
+        formData.append('document_source', 'file');
+        
+        if (parentId) {
+          formData.append('folder', parentId.toString());
+        }
+        
+        await vaultApi.uploadDocument(formData);
+      }
+      
+      await fetchDocuments();
+      alert(`Successfully uploaded folder hierarchy with ${fileList.length} file(s)`);
+    } catch (error) {
+      console.error('Failed to upload folder:', error);
+      alert("Error uploading folder.");
+    } finally {
+      setIsUploading(false);
+      e.target.value = '';
     }
   };
 
@@ -274,6 +427,14 @@ export default function DocumentWorkspace() {
             className="hidden" 
             multiple 
             onChange={handleFileUpload}
+          />
+          <input 
+            type="file" 
+            id="folder-upload-input" 
+            className="hidden" 
+            {...({ webkitdirectory: "", directory: "" } as any)}
+            multiple 
+            onChange={handleFolderUpload}
           />
           <button 
             onClick={handleCreateNew}
@@ -340,18 +501,6 @@ export default function DocumentWorkspace() {
                       </div>
                     </button>
 
-                    <button 
-                      onClick={handleUploadClick}
-                      className="w-full flex items-center gap-3 p-3 hover:bg-white/5 rounded-xl text-left transition-all group"
-                    >
-                      <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-400">
-                        <Upload size={18} />
-                      </div>
-                      <div>
-                        <div className="text-white font-bold text-sm">Upload Folder</div>
-                        <div className="text-white/40 text-[10px]">Upload entire directories</div>
-                      </div>
-                    </button>
                   </div>
                 </motion.div>
               </>
@@ -477,7 +626,7 @@ export default function DocumentWorkspace() {
 
           {/* Files Section */}
           <section>
-            <h2 className="text-white/40 text-xs font-black uppercase tracking-[0.2em] mb-4 px-1">Recent Documents</h2>
+            <h2 className="text-white/40 text-xs font-black uppercase tracking-[0.2em] mb-4 px-1">All Documents</h2>
             {viewMode === 'grid' ? (
               <div className={clsx(
                 "grid gap-6",
@@ -554,6 +703,9 @@ export default function DocumentWorkspace() {
           <CreateModal 
             onClose={() => setShowCreateModal(false)} 
             onCreate={handleCreateGoogleDoc}
+            onCreateFolder={handleCreateFolder}
+            onCreateSheet={(title) => handleCreateDocument(title, 'google_sheet')}
+            onCreateSlide={(title) => handleCreateDocument(title, 'google_slide')}
           />
         )}
       </AnimatePresence>
@@ -676,13 +828,75 @@ function FileRow({ file, onClick, isActive, showFull = true, onShare }: { file: 
   );
 }
 
-function CreateModal({ onClose, onCreate }: { onClose: () => void, onCreate: (title: string) => void }) {
+function CreateModal({ 
+  onClose, 
+  onCreate, 
+  onCreateFolder,
+  onCreateSheet,
+  onCreateSlide,
+}: { 
+  onClose: () => void; 
+  onCreate: (title: string) => void; 
+  onCreateFolder: (name: string) => void;
+  onCreateSheet?: (title: string) => void;
+  onCreateSlide?: (title: string) => void;
+}) {
   const options = [
-    { label: 'Document', icon: FileText, color: 'text-blue-400', desc: 'Write strategy, reports, or plans', type: 'doc' },
-    { label: 'Spreadsheet', icon: FileSpreadsheet, color: 'text-green-400', desc: 'Analyze data, projections, and budgets', type: 'sheet' },
-    { label: 'Presentation', icon: Presentation, color: 'text-orange-400', desc: 'Create pitches, reviews, and slides', type: 'slide' },
-    { label: 'Folder', icon: Folder, color: 'text-primary', desc: 'Organize your workspace hierarchy', type: 'folder' },
+    { 
+      label: 'Document', 
+      icon: FileText, 
+      color: 'text-blue-400', 
+      bg: 'bg-blue-500/10',
+      desc: 'Write strategy, reports, or plans', 
+      type: 'doc',
+      badge: 'Google Docs'
+    },
+    { 
+      label: 'Spreadsheet', 
+      icon: FileSpreadsheet, 
+      color: 'text-green-400', 
+      bg: 'bg-green-500/10',
+      desc: 'Analyze data, projections, and budgets', 
+      type: 'sheet',
+      badge: 'Google Sheets'
+    },
+    { 
+      label: 'Presentation', 
+      icon: Presentation, 
+      color: 'text-orange-400', 
+      bg: 'bg-orange-500/10',
+      desc: 'Create pitches, reviews, and slides', 
+      type: 'slide',
+      badge: 'Google Slides'
+    },
+    { 
+      label: 'Folder', 
+      icon: Folder, 
+      color: 'text-primary', 
+      bg: 'bg-primary/10',
+      desc: 'Organize your workspace hierarchy', 
+      type: 'folder',
+      badge: null
+    },
   ];
+
+  const handleClick = (type: string) => {
+    if (type === 'doc') {
+      const title = prompt('Enter document title:', 'New Strategy Document');
+      if (title) onCreate(title);
+    } else if (type === 'sheet') {
+      const title = prompt('Enter spreadsheet title:', 'New Spreadsheet');
+      if (title && onCreateSheet) onCreateSheet(title);
+      else if (title) onCreate(title);
+    } else if (type === 'slide') {
+      const title = prompt('Enter presentation title:', 'New Presentation');
+      if (title && onCreateSlide) onCreateSlide(title);
+      else if (title) onCreate(title);
+    } else if (type === 'folder') {
+      const name = prompt('Enter folder name:', 'New Folder');
+      if (name) onCreateFolder(name);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
@@ -701,26 +915,24 @@ function CreateModal({ onClose, onCreate }: { onClose: () => void, onCreate: (ti
       >
         <div className="relative">
           <h2 className="text-3xl font-black text-white mb-2">Create New</h2>
-          <p className="text-white/40 text-sm mb-10">Select the type of document you'd like to initialize in this folder.</p>
+          <p className="text-white/40 text-sm mb-10">Select the type of workspace item you'd like to create.</p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
             {options.map((opt, i) => (
               <button 
                 key={i}
-                onClick={() => {
-                  if (opt.type === 'doc') {
-                    const title = prompt("Enter document title:", "New Strategy Document");
-                    if (title) onCreate(title);
-                  } else {
-                    alert("Only 'Document' (Google Docs) is currently integrated. More coming soon!");
-                  }
-                }}
+                onClick={() => handleClick(opt.type)}
                 className="group bg-white/5 border border-white/10 hover:border-primary/50 rounded-2xl p-6 text-left transition-all hover:bg-white/10"
               >
-                <div className={clsx("w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center mb-4 transition-transform group-hover:scale-110", opt.color)}>
+                <div className={clsx('w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110', opt.bg, opt.color)}>
                   <opt.icon size={24} />
                 </div>
-                <div className="text-white font-bold text-lg mb-1">{opt.label}</div>
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="text-white font-bold text-lg">{opt.label}</div>
+                  {opt.badge && (
+                    <span className="text-[9px] bg-white/5 px-1.5 py-0.5 rounded border border-white/10 text-white/40 font-black uppercase">{opt.badge}</span>
+                  )}
+                </div>
                 <p className="text-white/30 text-xs leading-relaxed">{opt.desc}</p>
               </button>
             ))}

@@ -100,9 +100,15 @@ function EventSidebar({ items, isLoading, t }: { items: EventItem[]; isLoading: 
                  <p className="text-xs text-foreground/70 mt-3 flex gap-2">  <CalendarCog size={14}/>  {format(it.start, "EEEE, MMM d, yyyy")}</p>
                  {it.meetingLink && (
                    <div className="mt-3">
-                     <a href={it.meetingLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-500/20 text-blue-400 hover:text-blue-300 rounded text-xs font-medium transition-colors">
-                        Join Meeting
-                     </a>
+                     {it.meetingLink === 'pending-google-workspace' ? (
+                       <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-yellow-500/20 text-yellow-400 rounded text-xs font-medium italic">
+                         Preparing Google Meet Link...
+                       </span>
+                     ) : (
+                       <a href={it.meetingLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-500/20 text-blue-400 hover:text-blue-300 rounded text-xs font-medium transition-colors">
+                          Join Meeting
+                       </a>
+                     )}
                    </div>
                  )}
                 </div>

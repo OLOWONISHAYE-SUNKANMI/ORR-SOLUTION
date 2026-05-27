@@ -14,6 +14,8 @@ interface User {
   user_type: string;
   role_name?: string;
   role_display?: string;
+  client_id?: number;
+  admin_id?: number;
   permissions: Record<string, boolean>;
 }
 

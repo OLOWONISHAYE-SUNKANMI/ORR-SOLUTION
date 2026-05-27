@@ -3,17 +3,13 @@ import api from '@/lib/axios';
 import { useToastStore } from './toastStore';
 
 interface Document {
-  id: number;
+  id: string;
+  name: string;
   title: string;
-  description: string;
-  document: string;
-  document_type: string;
-  is_visible_to_client: boolean;
-  uploaded_by_name: string;
-  download_count: number;
-  last_accessed: string;
-  created_at: string;
-  file_size: string;
+  type: string;
+  size: string;
+  lastModified: string;
+  link: string;
 }
 
 interface DocumentState {
@@ -34,9 +30,22 @@ export const useDocumentStore = create<DocumentState>()((set, get) => ({
   fetchDocuments: async () => {
     set({ isLoading: true, error: null });
     try {
-      const response = await api.get('/client/documents');
-      const documentsData = response.data?.data || response.data || [];
-      set({ documents: Array.isArray(documentsData) ? documentsData : [], isLoading: false });
+      const response = await api.get('/vault/documents/');
+      let rawData = response.data?.data || response.data || [];
+      if (rawData && !Array.isArray(rawData) && Array.isArray(rawData.data)) {
+        rawData = rawData.data;
+      }
+      const documentsData = Array.isArray(rawData) ? rawData.map((d: any) => ({
+        ...d,
+        id: d.id.toString(),
+        name: d.title || d.name || 'Untitled',
+        title: d.title || d.name || 'Untitled',
+        type: d.document_type || d.type || 'doc',
+        size: d.file_size || '0 KB',
+        lastModified: d.updated_at || d.created_at || new Date().toISOString(),
+        link: d.link || ''
+      })) : [];
+      set({ documents: documentsData, isLoading: false });
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Failed to fetch documents';
       set({ error: errorMessage, isLoading: false, documents: [] });
