@@ -14,7 +14,7 @@ type EventItem = {
   start: Date;
   end: Date;
   allDay?: boolean;
-  resource?: { color: string };
+  resource?: { color: string; meetingLink?: string };
 };
 
 function EventSidebar({ items, isLoading }: { items: EventItem[]; isLoading: boolean }) {
@@ -86,7 +86,7 @@ export default function SchedulingPage() {
       title: `${meeting.meeting_type.replace('_', ' ')} - ${meeting.agenda?.substring(0, 30) || 'Meeting'}...`,
       start: startDate,
       end: endDate,
-      resource: { color: "#0ec277" }
+      resource: { color: "#0ec277", meetingLink: meeting.meeting_link }
     };
   });
 
@@ -142,12 +142,23 @@ export default function SchedulingPage() {
               <h4 className="text-sm font-semibold text-white">{selectedEvent.title}</h4>
               <p className="text-xs text-gray-400">Starting at {format(selectedEvent.start, "HH:mm")}</p>
             </div>
-            <a 
-              href={`/consultations/meeting/${selectedEvent.id}`}
-              className="bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-full text-sm font-bold transition-all shadow-lg shadow-primary/20"
-            >
-              Join Meet
-            </a>
+            {selectedEvent.resource?.meetingLink && selectedEvent.resource.meetingLink !== 'pending-google-workspace' ? (
+              <a 
+                href={selectedEvent.resource.meetingLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-full text-sm font-bold transition-all shadow-lg shadow-primary/20"
+              >
+                Join Meet
+              </a>
+            ) : (
+              <a 
+                href={`/consultations/meeting/${selectedEvent.id}`}
+                className="bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-full text-sm font-bold transition-all shadow-lg shadow-primary/20"
+              >
+                Join Meet
+              </a>
+            )}
           </div>
         </div>
       )}

@@ -18,6 +18,10 @@ export const adminVaultApi = {
       ? `/admin-portal/v1/vault/documents/?client_id=${clientId}`
       : '/admin-portal/v1/vault/documents/';
     const response = await axiosInstance.get(url);
-    return response.data.data;
+    let data = response.data?.data || response.data;
+    if (data && !Array.isArray(data) && Array.isArray(data.data)) {
+      data = data.data;
+    }
+    return Array.isArray(data) ? data : [];
   }
 };

@@ -339,15 +339,21 @@ export default function PastConsultationsPage() {
                   {/* Actions Area */}
                   <div className="mt-8 flex items-center gap-3">
                     {consultation.meeting_link && (
-                      <a
-                        href={consultation.meeting_link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex-1 py-3 px-4 bg-primary text-black rounded-xl text-xs font-bold hover:bg-primary/90 transition-all text-center flex items-center justify-center gap-2"
-                      >
-                        <LinkIcon size={14} />
-                        View Record
-                      </a>
+                      consultation.meeting_link === 'pending-google-workspace' ? (
+                        <span className="flex-1 py-3 px-4 bg-yellow-500/20 text-yellow-400 rounded-xl text-xs font-bold italic text-center flex items-center justify-center gap-2">
+                          Preparing Google Meet Link...
+                        </span>
+                      ) : (
+                        <a
+                          href={consultation.meeting_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-1 py-3 px-4 bg-primary text-black rounded-xl text-xs font-bold hover:bg-primary/90 transition-all text-center flex items-center justify-center gap-2"
+                        >
+                          <LinkIcon size={14} />
+                          View Record
+                        </a>
+                      )
                     )}
                     <button className="flex-1 py-3 px-4 bg-white/5 border border-white/10 text-white rounded-xl text-xs font-bold hover:bg-white/10 transition-all flex items-center justify-center gap-2 group-hover:border-white/20">
                       Summary

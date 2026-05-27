@@ -23,7 +23,9 @@ export default function MeetingPageClient({ meetingId }: MeetingPageClientProps)
     const fetchMeeting = async () => {
       try {
         const response = await axios.get(`/meetings/${meetingId}/`);
-        setMeeting(response.data);
+        // Handle wrapped data structure from the API response
+        const meetingData = response.data?.data || response.data;
+        setMeeting(meetingData);
       } catch (error) {
         console.error("Failed to fetch meeting:", error);
       }
@@ -32,8 +34,8 @@ export default function MeetingPageClient({ meetingId }: MeetingPageClientProps)
   }, [meetingId]);
 
   const handleJoin = () => {
-    if (meeting?.meeting_link) {
-      window.open(meeting.meeting_link, "_blank");
+    if (meeting?.meeting_link && meeting.meeting_link !== 'pending-google-workspace') {
+      window.location.href = meeting.meeting_link;
     } else {
       setHasJoined(true);
     }
