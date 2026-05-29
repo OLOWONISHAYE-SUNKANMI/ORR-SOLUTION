@@ -443,19 +443,28 @@ export const useAuthStore = create<AuthState>()(
           return false;
         }
 
+        // 1. Snappy Local JWT Expiration Check
         try {
-          await api.get("/account/settings/");
-          return true;
-        } catch (error: unknown) {
-          const err = error as AxiosError;
-          if (err.response?.status === 401) {
-            localStorage.removeItem("accessToken");
-            localStorage.removeItem("refreshToken");
-            set({ user: null, accessToken: null, refreshToken: null });
-            return false;
+          const payloadBase64 = accessToken.split(".")[1];
+          if (payloadBase64) {
+            const decoded = JSON.parse(
+              typeof window !== "undefined"
+                ? window.atob(payloadBase64)
+                : Buffer.from(payloadBase64, "base64").toString("utf-8")
+            );
+            if (decoded.exp && decoded.exp * 1000 < Date.now()) {
+              // Token is expired! Clean up state immediately.
+              localStorage.removeItem("accessToken");
+              localStorage.removeItem("refreshToken");
+              set({ user: null, accessToken: null, refreshToken: null });
+              return false;
+            }
           }
-          return true;
+        } catch (e) {
+          // If decoding fails, fall back to simple API verification
         }
+
+        return true;
       },
 
       logout: () => {

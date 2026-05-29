@@ -173,19 +173,20 @@ export default function DocumentWorkspace() {
     try {
       setIsLoading(true);
       
-      let docsData: any[] = [];
-      let foldersData: any[] = [];
+      // Fetch documents and folders in parallel for speed
+      const [docsResult, foldersResult] = await Promise.allSettled([
+        vaultApi.getDocuments(),
+        vaultApi.getFolders(),
+      ]);
       
-      try {
-        docsData = await vaultApi.getDocuments();
-      } catch (err) {
-        console.error('Failed to fetch documents:', err);
+      const docsData = docsResult.status === 'fulfilled' ? docsResult.value : [];
+      const foldersData = foldersResult.status === 'fulfilled' ? foldersResult.value : [];
+      
+      if (docsResult.status === 'rejected') {
+        console.error('Failed to fetch documents:', docsResult.reason);
       }
-      
-      try {
-        foldersData = await vaultApi.getFolders();
-      } catch (err) {
-        console.error('Failed to fetch folders:', err);
+      if (foldersResult.status === 'rejected') {
+        console.error('Failed to fetch folders:', foldersResult.reason);
       }
       
       setFiles(docsData || []);
