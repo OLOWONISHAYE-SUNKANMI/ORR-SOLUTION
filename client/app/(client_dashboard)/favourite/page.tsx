@@ -62,8 +62,8 @@ export default function FavouritesPage() {
     await removeFavorite(favoriteId);
   };
 
-  const handleDownload = async (documentId: number) => {
-    await downloadDocument(documentId);
+  const handleDownload = async (documentId: string | number) => {
+    await downloadDocument(documentId.toString());
   };
 
   if (isLoading) {

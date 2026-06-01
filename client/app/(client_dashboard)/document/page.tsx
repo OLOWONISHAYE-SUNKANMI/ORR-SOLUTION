@@ -883,22 +883,39 @@ function CreateModal({
     },
   ];
 
+  const [promptState, setPromptState] = useState<{ isOpen: boolean, type: string, promptText: string }>({ isOpen: false, type: '', promptText: '' });
+  const [inputValue, setInputValue] = useState('');
+
   const handleClick = (type: string) => {
     if (type === 'doc') {
-      const title = prompt('Enter document title:', 'New Strategy Document');
-      if (title) onCreate(title);
+      setPromptState({ isOpen: true, type, promptText: 'Enter document title:' });
+      setInputValue('New Strategy Document');
     } else if (type === 'sheet') {
-      const title = prompt('Enter spreadsheet title:', 'New Spreadsheet');
-      if (title && onCreateSheet) onCreateSheet(title);
-      else if (title) onCreate(title);
+      setPromptState({ isOpen: true, type, promptText: 'Enter spreadsheet title:' });
+      setInputValue('New Spreadsheet');
     } else if (type === 'slide') {
-      const title = prompt('Enter presentation title:', 'New Presentation');
-      if (title && onCreateSlide) onCreateSlide(title);
-      else if (title) onCreate(title);
+      setPromptState({ isOpen: true, type, promptText: 'Enter presentation title:' });
+      setInputValue('New Presentation');
     } else if (type === 'folder') {
-      const name = prompt('Enter folder name:', 'New Folder');
-      if (name) onCreateFolder(name);
+      setPromptState({ isOpen: true, type, promptText: 'Enter folder name:' });
+      setInputValue('New Folder');
     }
+  };
+
+  const handlePromptSubmit = () => {
+    const { type } = promptState;
+    if (type === 'doc') {
+      if (inputValue) onCreate(inputValue);
+    } else if (type === 'sheet') {
+      if (inputValue && onCreateSheet) onCreateSheet(inputValue);
+      else if (inputValue) onCreate(inputValue);
+    } else if (type === 'slide') {
+      if (inputValue && onCreateSlide) onCreateSlide(inputValue);
+      else if (inputValue) onCreate(inputValue);
+    } else if (type === 'folder') {
+      if (inputValue) onCreateFolder(inputValue);
+    }
+    setPromptState({ isOpen: false, type: '', promptText: '' });
   };
 
   return (
@@ -917,38 +934,83 @@ function CreateModal({
         className="relative bg-[#0d223c] border border-white/10 rounded-[3rem] p-10 max-w-2xl w-full shadow-2xl overflow-hidden"
       >
         <div className="relative">
-          <h2 className="text-3xl font-black text-white mb-2">Create New</h2>
-          <p className="text-white/40 text-sm mb-10">Select the type of workspace item you'd like to create.</p>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
-            {options.map((opt, i) => (
-              <button 
-                key={i}
-                onClick={() => handleClick(opt.type)}
-                className="group bg-white/5 border border-white/10 hover:border-primary/50 rounded-2xl p-6 text-left transition-all hover:bg-white/10"
+          <AnimatePresence mode="wait">
+            {promptState.isOpen ? (
+              <motion.div
+                key="prompt"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
               >
-                <div className={clsx('w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110', opt.bg, opt.color)}>
-                  <opt.icon size={24} />
+                <h2 className="text-3xl font-black text-white mb-2">{promptState.promptText}</h2>
+                <p className="text-white/40 text-sm mb-8">Please provide a name for your new item.</p>
+                <input 
+                  value={inputValue} 
+                  onChange={e => setInputValue(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white outline-none focus:border-primary/50 transition-all mb-8 text-lg"
+                  autoFocus
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') handlePromptSubmit();
+                    if (e.key === 'Escape') setPromptState({ isOpen: false, type: '', promptText: '' });
+                  }}
+                />
+                <div className="flex justify-end gap-4">
+                  <button 
+                    onClick={() => setPromptState({ isOpen: false, type: '', promptText: '' })}
+                    className="px-6 py-3 text-white/40 hover:text-white transition-colors text-sm font-bold"
+                  >
+                    Back
+                  </button>
+                  <button 
+                    onClick={handlePromptSubmit}
+                    className="bg-primary hover:bg-primary/90 text-black px-8 py-3 rounded-xl font-bold transition-all shadow-lg shadow-primary/20"
+                  >
+                    Create
+                  </button>
                 </div>
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="text-white font-bold text-lg">{opt.label}</div>
-                  {opt.badge && (
-                    <span className="text-[9px] bg-white/5 px-1.5 py-0.5 rounded border border-white/10 text-white/40 font-black uppercase">{opt.badge}</span>
-                  )}
-                </div>
-                <p className="text-white/30 text-xs leading-relaxed">{opt.desc}</p>
-              </button>
-            ))}
-          </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="options"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+              >
+                <h2 className="text-3xl font-black text-white mb-2">Create New</h2>
+                <p className="text-white/40 text-sm mb-10">Select the type of workspace item you'd like to create.</p>
 
-          <div className="flex justify-end gap-4">
-            <button 
-              onClick={onClose}
-              className="px-6 py-3 text-white/40 hover:text-white transition-colors text-sm font-bold"
-            >
-              Cancel
-            </button>
-          </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
+                  {options.map((opt, i) => (
+                    <button 
+                      key={i}
+                      onClick={() => handleClick(opt.type)}
+                      className="group bg-white/5 border border-white/10 hover:border-primary/50 rounded-2xl p-6 text-left transition-all hover:bg-white/10"
+                    >
+                      <div className={clsx('w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110', opt.bg, opt.color)}>
+                        <opt.icon size={24} />
+                      </div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="text-white font-bold text-lg">{opt.label}</div>
+                        {opt.badge && (
+                          <span className="text-[9px] bg-white/5 px-1.5 py-0.5 rounded border border-white/10 text-white/40 font-black uppercase">{opt.badge}</span>
+                        )}
+                      </div>
+                      <p className="text-white/30 text-xs leading-relaxed">{opt.desc}</p>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex justify-end gap-4">
+                  <button 
+                    onClick={onClose}
+                    className="px-6 py-3 text-white/40 hover:text-white transition-colors text-sm font-bold"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </motion.div>
     </div>

@@ -10,6 +10,9 @@ interface Document {
   size: string;
   lastModified: string;
   link: string;
+  document_type?: string;
+  description?: string;
+  file_size?: string;
 }
 
 interface DocumentState {
@@ -17,8 +20,8 @@ interface DocumentState {
   isLoading: boolean;
   error: string | null;
   fetchDocuments: () => Promise<void>;
-  toggleFavorite: (documentId: number) => Promise<void>;
-  downloadDocument: (documentId: number) => Promise<void>;
+  toggleFavorite: (documentId: string) => Promise<void>;
+  downloadDocument: (documentId: string) => Promise<void>;
   clearError: () => void;
 }
 
@@ -53,7 +56,7 @@ export const useDocumentStore = create<DocumentState>()((set, get) => ({
     }
   },
 
-  toggleFavorite: async (documentId: number) => {
+  toggleFavorite: async (documentId: string) => {
     try {
       await api.post(`/favourite/${documentId}/toggle/`);
       useToastStore.getState().addToast('Favorite updated', 'success');
@@ -63,7 +66,7 @@ export const useDocumentStore = create<DocumentState>()((set, get) => ({
     }
   },
 
-  downloadDocument: async (documentId: number) => {
+  downloadDocument: async (documentId: string) => {
     try {
       const response = await api.get(`/client/documents/${documentId}/download`, {
         responseType: 'blob'
