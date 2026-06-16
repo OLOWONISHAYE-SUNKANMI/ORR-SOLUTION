@@ -54,32 +54,65 @@ function normalizeDocType(d: any): string {
   return (rawType || 'doc').toLowerCase().replace(/^\./, '');
 }
 
+let documentsCache: VaultDocument[] | null = null;
+let foldersCache: VaultFolder[] | null = null;
+let documentsPromise: Promise<VaultDocument[]> | null = null;
+let foldersPromise: Promise<VaultFolder[]> | null = null;
+
 export const vaultApi = {
-  getDocuments: async (): Promise<VaultDocument[]> => {
-    const response = await axiosInstance.get('/vault/documents/');
-    let data = response.data?.data || response.data;
-    // Handle double-nested data from backend wrapper middleware
-    if (data && !Array.isArray(data) && Array.isArray(data.data)) {
-      data = data.data;
+  clearCache: () => {
+    documentsCache = null;
+    foldersCache = null;
+    documentsPromise = null;
+    foldersPromise = null;
+  },
+
+  getDocuments: async (force = false): Promise<VaultDocument[]> => {
+    if (!force && documentsCache) {
+      // Background revalidation to keep data fresh, return cache immediately
+      vaultApi.getDocuments(true).then((freshDocs) => {
+        documentsCache = freshDocs;
+      }).catch(() => {});
+      return documentsCache;
     }
-    if (!Array.isArray(data)) return [];
-    return data.map((d: any) => {
-      let formattedDate = 'Unknown Date';
+
+    if (documentsPromise) {
+      return documentsPromise;
+    }
+
+    documentsPromise = (async () => {
       try {
-        const rawDate = d.updated_at || d.created_at;
-        if (rawDate) {
-          formattedDate = new Date(rawDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        const response = await axiosInstance.get('/vault/documents/');
+        let data = response.data?.data || response.data;
+        if (data && !Array.isArray(data) && Array.isArray(data.data)) {
+          data = data.data;
         }
-      } catch (e) {}
-      
-      return {
-        ...d,
-        name: d.title || d.name || 'Untitled',
-        lastModified: formattedDate,
-        size: d.file_size || '0 KB',
-        type: normalizeDocType(d),
-      };
-    });
+        if (!Array.isArray(data)) return [];
+        const formatted = data.map((d: any) => {
+          let formattedDate = 'Unknown Date';
+          try {
+            const rawDate = d.updated_at || d.created_at;
+            if (rawDate) {
+              formattedDate = new Date(rawDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+            }
+          } catch (e) {}
+          
+          return {
+            ...d,
+            name: d.title || d.name || 'Untitled',
+            lastModified: formattedDate,
+            size: d.file_size || '0 KB',
+            type: normalizeDocType(d),
+          };
+        });
+        documentsCache = formatted;
+        return formatted;
+      } finally {
+        documentsPromise = null;
+      }
+    })();
+
+    return documentsPromise;
   },
 
   getDocument: async (id: string): Promise<VaultDocument> => {
@@ -102,17 +135,39 @@ export const vaultApi = {
     };
   },
 
-  getFolders: async (): Promise<VaultFolder[]> => {
-    const response = await axiosInstance.get('/vault/folders/');
-    let data = response.data?.data || response.data;
-    if (data && !Array.isArray(data) && Array.isArray(data.data)) {
-      data = data.data;
+  getFolders: async (force = false): Promise<VaultFolder[]> => {
+    if (!force && foldersCache) {
+      // Background revalidation to keep data fresh, return cache immediately
+      vaultApi.getFolders(true).then((freshFolders) => {
+        foldersCache = freshFolders;
+      }).catch(() => {});
+      return foldersCache;
     }
-    if (!Array.isArray(data)) return [];
-    return data.map((f: any) => ({
-      ...f,
-      createdAt: f.created_at || f.updated_at
-    }));
+
+    if (foldersPromise) {
+      return foldersPromise;
+    }
+
+    foldersPromise = (async () => {
+      try {
+        const response = await axiosInstance.get('/vault/folders/');
+        let data = response.data?.data || response.data;
+        if (data && !Array.isArray(data) && Array.isArray(data.data)) {
+          data = data.data;
+        }
+        if (!Array.isArray(data)) return [];
+        const formatted = data.map((f: any) => ({
+          ...f,
+          createdAt: f.created_at || f.updated_at
+        }));
+        foldersCache = formatted;
+        return formatted;
+      } finally {
+        foldersPromise = null;
+      }
+    })();
+
+    return foldersPromise;
   },
 
   /**
@@ -126,6 +181,7 @@ export const vaultApi = {
     type: string = 'google_doc',
     folderId?: string | null
   ): Promise<any> => {
+    vaultApi.clearCache();
     const response = await axiosInstance.post(
       '/admin-portal/v1/vault/documents/create-google-doc/',
       {
@@ -140,11 +196,13 @@ export const vaultApi = {
   },
 
   uploadDocument: async (formData: FormData): Promise<any> => {
+    vaultApi.clearCache();
     const response = await axiosInstance.post('/vault/documents/', formData);
     return response.data?.data || response.data;
   },
 
   createFolder: async (name: string, parentId?: string | null, clientId?: number | null): Promise<any> => {
+    vaultApi.clearCache();
     const response = await axiosInstance.post('/vault/folders/', {
       name,
       parent: parentId || null,
