@@ -71,7 +71,7 @@ export const useDocumentStore = create<DocumentState>()((set, get) => ({
       const response = await api.get(`/client/documents/${documentId}/download`, {
         responseType: 'blob'
       });
-      
+
       // Create download link
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
@@ -81,7 +81,7 @@ export const useDocumentStore = create<DocumentState>()((set, get) => ({
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-      
+
       useToastStore.getState().addToast('Download started', 'success');
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Failed to download document';

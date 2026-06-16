@@ -72,7 +72,7 @@ export default function ORRJourneySection() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="w-full py-24 px-6 relative overflow-hidden font-poppins bg-background text-foreground transition-colors duration-300">
+    <section ref={sectionRef} className="w-full py-16 md:py-24 px-6 relative overflow-hidden font-poppins bg-background text-foreground transition-colors duration-300">
       {/* Global Background Integration */}
       <div className="relative z-10 max-w-7xl mx-auto">
         <div ref={headerRef} className="text-center mb-20 space-y-6">
@@ -99,7 +99,7 @@ export default function ORRJourneySection() {
               {/* Step Card */}
               <div
                 ref={el => { stepsRef.current[index] = el; }}
-                className={`relative z-10 p-8 rounded-[32px] transition-all duration-500 h-full flex flex-col border
+                className={`relative z-10 p-6 md:p-8 rounded-[32px] transition-all duration-500 h-full flex flex-col border
                   ${step.type === 'critical'
                     ? 'bg-primary/10 border-primary shadow-[0_0_30px_rgba(14,194,119,0.1)] group-hover:border-primary/60'
                     : step.type === 'optional'

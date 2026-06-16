@@ -70,7 +70,7 @@ export default function ORRReportSection({ content }: ORRReportSectionProps) {
   }, []);
 
   return (
-    <section ref={sectionRef} className="relative w-full bg-background text-foreground py-32 overflow-hidden font-poppins">
+    <section ref={sectionRef} className="relative w-full bg-background text-foreground py-16 md:py-32 overflow-hidden font-poppins">
       {/* Premium Ambient Background Effects */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
         <div className="absolute top-[-10%] right-[-5%] w-[40rem] h-[40rem] bg-primary/10 dark:bg-primary/10 rounded-full blur-[120px] opacity-70"></div>
@@ -80,7 +80,7 @@ export default function ORRReportSection({ content }: ORRReportSectionProps) {
       <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-24 relative z-10">
         
         {/* Main Title Area */}
-        <div className="mb-20 max-w-4xl">
+        <div className="mb-12 md:mb-20 max-w-4xl">
           <div className="flex items-center gap-4 mb-6" ref={titleRef}>
             <div className="p-3 rounded-2xl bg-primary/10 dark:bg-primary/20 text-primary shadow-sm border border-primary/10">
               <FileText size={32} className="stroke-[1.5]" />
@@ -156,7 +156,7 @@ export default function ORRReportSection({ content }: ORRReportSectionProps) {
             
             <div 
               ref={cardRef} 
-              className="bg-white/70 dark:bg-gray-900/40 backdrop-blur-2xl border border-gray-200/50 dark:border-white/10 p-10 md:p-14 w-full rounded-[2rem] shadow-[0_8px_40px_rgba(0,0,0,0.06)] dark:shadow-[0_8px_40px_rgba(0,0,0,0.3)] relative overflow-hidden"
+              className="bg-white/70 dark:bg-gray-900/40 backdrop-blur-2xl border border-gray-200/50 dark:border-white/10 p-6 md:p-14 w-full rounded-[2rem] shadow-[0_8px_40px_rgba(0,0,0,0.06)] dark:shadow-[0_8px_40px_rgba(0,0,0,0.3)] relative overflow-hidden"
             >
               {/* Subtle inner highlight */}
               <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/50 dark:via-white/20 to-transparent"></div>

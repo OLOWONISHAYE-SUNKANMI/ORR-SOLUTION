@@ -63,7 +63,7 @@ export function HeroSection() {
     .replace(".mp4", ".jpg");
 
   return (
-    <section ref={sectionRef} className="w-full aspect-video relative mt-[80px] lg:mt-0">
+    <section ref={sectionRef} className="w-full h-[60vh] md:h-auto md:aspect-video relative mt-[80px] lg:mt-0">
       <motion.div
         layout
         initial={false}
@@ -85,7 +85,7 @@ export function HeroSection() {
           duration: 0.8,
           ease: [0.16, 1, 0.3, 1],
         }}
-        className="overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.3)] bg-card aspect-video will-change-transform"
+        className="overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.3)] bg-card h-full md:h-auto md:aspect-video will-change-transform"
         style={{ transform: "translateZ(0)" }}
       >
         <video

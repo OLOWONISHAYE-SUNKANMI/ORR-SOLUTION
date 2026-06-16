@@ -129,8 +129,8 @@ export default function ServicePillar({ content, onUpdate }: ServicePillarProps)
         <span dangerouslySetInnerHTML={{ __html: allContent?.servicesPage?.pillars_subtitle || t.servicePillar.subtitle }} />
       </p>
 
-      <div className="relative w-full max-w-7xl mr-0">
-        <div ref={cardRef} className="relative w-full bg-card backdrop-blur-md border border-[#40B25B] lg:border-t-[0.5rem] lg:border-l-[0.5rem] lg:border-b-[0.5rem] lg:border-r-0 rounded-2xl lg:rounded-tl-[91.25px] lg:rounded-bl-[91.25px] lg:rounded-tr-none lg:rounded-br-none ml-0 p-10 sm:p-8 md:p-10 lg:p-12 xl:p-16 shadow-lg">
+      <div className="relative w-full max-w-7xl mr-0 px-2 sm:px-0">
+        <div ref={cardRef} className="relative w-full bg-card backdrop-blur-md border border-[#40B25B] lg:border-t-[0.5rem] lg:border-l-[0.5rem] lg:border-b-[0.5rem] lg:border-r-0 rounded-2xl lg:rounded-tl-[91.25px] lg:rounded-bl-[91.25px] lg:rounded-tr-none lg:rounded-br-none ml-0 p-6 sm:p-8 md:p-10 lg:p-12 xl:p-16 shadow-lg">
           <div className="grid grid-cols-1 md:grid-cols-[60px_1fr] gap-6 md:gap-8">
             <div className="hidden md:flex relative flex-col items-center">
               <div ref={lineRef} className="absolute top-[32px] bottom-[52px] w-[4px] mb-20 bg-[#05CC79]"></div>

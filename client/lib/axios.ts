@@ -57,6 +57,16 @@ api.interceptors.request.use(
       }
     }
 
+    // Automatically remove Content-Type if sending FormData, so the browser sets the correct boundary
+    if (config.data instanceof FormData) {
+      if (config.headers) {
+        delete config.headers["Content-Type"];
+        if (typeof config.headers.delete === "function") {
+          config.headers.delete("Content-Type");
+        }
+      }
+    }
+
     if (process.env.NODE_ENV === 'development') {
       const baseURL = config.baseURL || "";
       console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${baseURL}${config.url}`);

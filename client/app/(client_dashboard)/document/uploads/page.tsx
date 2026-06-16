@@ -71,7 +71,7 @@ export default function DocumentVault() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-10">
             {/* Column 1 */}
             <div>
               <h2 className="text-sm mb-3 opacity-70">{interpolate(t.dashboard.vault.columns.project)}</h2>

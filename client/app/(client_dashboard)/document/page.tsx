@@ -41,6 +41,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
 import { vaultApi, VaultDocument, VaultFolder } from '@/lib/vault-api';
 import { useAuthStore } from '@/store/authStore';
+import { useToastStore } from '@/store/toastStore';
 
 const WordLogo = ({ className, size = 20 }: { className?: string, size?: number }) => (
   <svg 
@@ -245,7 +246,7 @@ export default function DocumentWorkspace() {
   const handleCreateDocument = async (title: string, docType: 'google_doc' | 'google_sheet' | 'google_slide' = 'google_doc') => {
     const clientId = getClientId();
     if (!clientId) {
-      alert("Session expired. Please log out and log in again.");
+      useToastStore.getState().addToast("Session expired. Please log out and log in again.", "error");
       return;
     }
     
@@ -254,10 +255,11 @@ export default function DocumentWorkspace() {
       setShowCreateModal(false);
       await vaultApi.createGoogleDoc(title, clientId, docType, currentFolderId);
       await fetchDocuments();
+      useToastStore.getState().addToast(`Successfully created ${docType === 'google_doc' ? 'Document' : docType === 'google_sheet' ? 'Spreadsheet' : 'Presentation'}`, "success");
     } catch (error: any) {
       console.error(`Failed to create ${docType}:`, error);
       const msg = error?.response?.data?.error || error?.message || 'Error creating document.';
-      alert(msg);
+      useToastStore.getState().addToast(msg, "error");
     } finally {
       setIsUploading(false);
     }
@@ -279,7 +281,7 @@ export default function DocumentWorkspace() {
   const handleCreateFolder = async (name: string) => {
     const clientId = getClientId();
     if (!clientId) {
-      alert("Session expired. Please log out and log in again.");
+      useToastStore.getState().addToast("Session expired. Please log out and log in again.", "error");
       return;
     }
     
@@ -288,10 +290,11 @@ export default function DocumentWorkspace() {
       setShowCreateModal(false);
       await vaultApi.createFolder(name, currentFolderId, clientId);
       await fetchDocuments();
+      useToastStore.getState().addToast(`Successfully created folder "${name}"`, "success");
     } catch (error: any) {
       console.error('Failed to create folder:', error);
       const msg = error?.response?.data?.error || error?.message || 'Error creating folder.';
-      alert(msg);
+      useToastStore.getState().addToast(msg, "error");
     } finally {
       setIsUploading(false);
     }
@@ -308,7 +311,7 @@ export default function DocumentWorkspace() {
 
     const clientId = getClientId();
     if (!clientId) {
-      alert("Session expired. Please log out and log in again.");
+      useToastStore.getState().addToast("Session expired. Please log out and log in again.", "error");
       return;
     }
 
@@ -333,10 +336,10 @@ export default function DocumentWorkspace() {
       }
       
       await fetchDocuments();
-      alert(`Successfully uploaded ${fileList.length} file(s)`);
+      useToastStore.getState().addToast(`Successfully uploaded ${fileList.length} file(s)`, "success");
     } catch (error: any) {
       console.error('Failed to upload file:', error);
-      alert(error?.response?.data?.error || "Error uploading file(s).");
+      useToastStore.getState().addToast(error?.response?.data?.error || "Error uploading file(s).", "error");
     } finally {
       setIsUploading(false);
       e.target.value = '';
@@ -349,7 +352,7 @@ export default function DocumentWorkspace() {
 
     const clientId = getClientId();
     if (!clientId) {
-      alert("Session expired. Please log out and log in again.");
+      useToastStore.getState().addToast("Session expired. Please log out and log in again.", "error");
       return;
     }
 
@@ -399,10 +402,10 @@ export default function DocumentWorkspace() {
       }
       
       await fetchDocuments();
-      alert(`Successfully uploaded folder hierarchy with ${fileList.length} file(s)`);
+      useToastStore.getState().addToast(`Successfully uploaded folder hierarchy with ${fileList.length} file(s)`, "success");
     } catch (error) {
       console.error('Failed to upload folder:', error);
-      alert("Error uploading folder.");
+      useToastStore.getState().addToast("Error uploading folder.", "error");
     } finally {
       setIsUploading(false);
       e.target.value = '';
@@ -410,7 +413,7 @@ export default function DocumentWorkspace() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-6 lg:p-10">
+    <div className="min-h-screen bg-background p-4 md:p-6 lg:p-10">
       {/* Header Section */}
       <header className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
@@ -596,7 +599,7 @@ export default function DocumentWorkspace() {
       </nav>
 
       {/* Explorer Content */}
-      <div className="flex flex-col lg:flex-row gap-8">
+      <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
         <div className={clsx("flex-1 space-y-8 transition-all duration-500", showSummary ? "lg:max-w-[calc(100%-400px)]" : "w-full")}>
           {/* Folders Section */}
           {filteredFolders.length > 0 && (
@@ -644,7 +647,7 @@ export default function DocumentWorkspace() {
                 ))}
               </div>
             ) : (
-              <div className="bg-card/30 border border-white/10 rounded-[2rem] overflow-hidden">
+              <div className="bg-card/30 border border-white/10 rounded-[2rem] overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead className="bg-white/5">
                     <tr>
@@ -881,22 +884,39 @@ function CreateModal({
     },
   ];
 
+  const [promptState, setPromptState] = useState<{ isOpen: boolean, type: string, promptText: string }>({ isOpen: false, type: '', promptText: '' });
+  const [inputValue, setInputValue] = useState('');
+
   const handleClick = (type: string) => {
     if (type === 'doc') {
-      const title = prompt('Enter document title:', 'New Strategy Document');
-      if (title) onCreate(title);
+      setPromptState({ isOpen: true, type, promptText: 'Enter document title:' });
+      setInputValue('New Strategy Document');
     } else if (type === 'sheet') {
-      const title = prompt('Enter spreadsheet title:', 'New Spreadsheet');
-      if (title && onCreateSheet) onCreateSheet(title);
-      else if (title) onCreate(title);
+      setPromptState({ isOpen: true, type, promptText: 'Enter spreadsheet title:' });
+      setInputValue('New Spreadsheet');
     } else if (type === 'slide') {
-      const title = prompt('Enter presentation title:', 'New Presentation');
-      if (title && onCreateSlide) onCreateSlide(title);
-      else if (title) onCreate(title);
+      setPromptState({ isOpen: true, type, promptText: 'Enter presentation title:' });
+      setInputValue('New Presentation');
     } else if (type === 'folder') {
-      const name = prompt('Enter folder name:', 'New Folder');
-      if (name) onCreateFolder(name);
+      setPromptState({ isOpen: true, type, promptText: 'Enter folder name:' });
+      setInputValue('New Folder');
     }
+  };
+
+  const handlePromptSubmit = () => {
+    const { type } = promptState;
+    if (type === 'doc') {
+      if (inputValue) onCreate(inputValue);
+    } else if (type === 'sheet') {
+      if (inputValue && onCreateSheet) onCreateSheet(inputValue);
+      else if (inputValue) onCreate(inputValue);
+    } else if (type === 'slide') {
+      if (inputValue && onCreateSlide) onCreateSlide(inputValue);
+      else if (inputValue) onCreate(inputValue);
+    } else if (type === 'folder') {
+      if (inputValue) onCreateFolder(inputValue);
+    }
+    setPromptState({ isOpen: false, type: '', promptText: '' });
   };
 
   return (
@@ -915,38 +935,83 @@ function CreateModal({
         className="relative bg-[#0d223c] border border-white/10 rounded-[3rem] p-10 max-w-2xl w-full shadow-2xl overflow-hidden"
       >
         <div className="relative">
-          <h2 className="text-3xl font-black text-white mb-2">Create New</h2>
-          <p className="text-white/40 text-sm mb-10">Select the type of workspace item you'd like to create.</p>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
-            {options.map((opt, i) => (
-              <button 
-                key={i}
-                onClick={() => handleClick(opt.type)}
-                className="group bg-white/5 border border-white/10 hover:border-primary/50 rounded-2xl p-6 text-left transition-all hover:bg-white/10"
+          <AnimatePresence mode="wait">
+            {promptState.isOpen ? (
+              <motion.div
+                key="prompt"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
               >
-                <div className={clsx('w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110', opt.bg, opt.color)}>
-                  <opt.icon size={24} />
+                <h2 className="text-3xl font-black text-white mb-2">{promptState.promptText}</h2>
+                <p className="text-white/40 text-sm mb-8">Please provide a name for your new item.</p>
+                <input 
+                  value={inputValue} 
+                  onChange={e => setInputValue(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white outline-none focus:border-primary/50 transition-all mb-8 text-lg"
+                  autoFocus
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') handlePromptSubmit();
+                    if (e.key === 'Escape') setPromptState({ isOpen: false, type: '', promptText: '' });
+                  }}
+                />
+                <div className="flex justify-end gap-4">
+                  <button 
+                    onClick={() => setPromptState({ isOpen: false, type: '', promptText: '' })}
+                    className="px-6 py-3 text-white/40 hover:text-white transition-colors text-sm font-bold"
+                  >
+                    Back
+                  </button>
+                  <button 
+                    onClick={handlePromptSubmit}
+                    className="bg-primary hover:bg-primary/90 text-black px-8 py-3 rounded-xl font-bold transition-all shadow-lg shadow-primary/20"
+                  >
+                    Create
+                  </button>
                 </div>
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="text-white font-bold text-lg">{opt.label}</div>
-                  {opt.badge && (
-                    <span className="text-[9px] bg-white/5 px-1.5 py-0.5 rounded border border-white/10 text-white/40 font-black uppercase">{opt.badge}</span>
-                  )}
-                </div>
-                <p className="text-white/30 text-xs leading-relaxed">{opt.desc}</p>
-              </button>
-            ))}
-          </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="options"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+              >
+                <h2 className="text-3xl font-black text-white mb-2">Create New</h2>
+                <p className="text-white/40 text-sm mb-10">Select the type of workspace item you'd like to create.</p>
 
-          <div className="flex justify-end gap-4">
-            <button 
-              onClick={onClose}
-              className="px-6 py-3 text-white/40 hover:text-white transition-colors text-sm font-bold"
-            >
-              Cancel
-            </button>
-          </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
+                  {options.map((opt, i) => (
+                    <button 
+                      key={i}
+                      onClick={() => handleClick(opt.type)}
+                      className="group bg-white/5 border border-white/10 hover:border-primary/50 rounded-2xl p-6 text-left transition-all hover:bg-white/10"
+                    >
+                      <div className={clsx('w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110', opt.bg, opt.color)}>
+                        <opt.icon size={24} />
+                      </div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="text-white font-bold text-lg">{opt.label}</div>
+                        {opt.badge && (
+                          <span className="text-[9px] bg-white/5 px-1.5 py-0.5 rounded border border-white/10 text-white/40 font-black uppercase">{opt.badge}</span>
+                        )}
+                      </div>
+                      <p className="text-white/30 text-xs leading-relaxed">{opt.desc}</p>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex justify-end gap-4">
+                  <button 
+                    onClick={onClose}
+                    className="px-6 py-3 text-white/40 hover:text-white transition-colors text-sm font-bold"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </motion.div>
     </div>
@@ -1018,7 +1083,7 @@ function GeminiSummaryPanel({ file, onClose, onOpen, onShare }: { file: any, onC
       initial={{ x: 400, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       exit={{ x: 400, opacity: 0 }}
-      className="w-full lg:w-[400px] bg-card/50 backdrop-blur-2xl border border-white/10 rounded-[3rem] p-8 flex flex-col h-[calc(100vh-12rem)] sticky top-32"
+      className="w-full lg:w-[400px] bg-card/50 backdrop-blur-2xl border border-white/10 rounded-[3rem] p-6 md:p-8 flex flex-col h-[calc(100vh-12rem)] sticky top-32"
     >
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-3">
