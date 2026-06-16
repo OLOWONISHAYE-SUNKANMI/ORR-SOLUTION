@@ -48,7 +48,15 @@ export const useProfileStore = create<ProfileState>()((set, get) => ({
   isEditing: false,
   error: null,
 
-  fetchProfile: async () => {
+  fetchProfile: async (force = false) => {
+    const state = get();
+    if (!force && state.profile.username && state.profile.first_name) {
+      return;
+    }
+
+    // Prevent duplicate concurrent requests
+    if (state.isLoading) return;
+
     set({ isLoading: true, error: null });
     try {
       const response = await api.get('/account/settings/');

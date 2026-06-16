@@ -8,13 +8,13 @@ import { useLanguage, interpolate } from "@/lib/i18n/LanguageContext";
 export default function DocumentVault() {
   const { t } = useLanguage();
   const { documents, isLoading, fetchDocuments, toggleFavorite, downloadDocument } = useDocumentStore();
-  const [localFavorites, setLocalFavorites] = useState<Set<number>>(new Set());
+  const [localFavorites, setLocalFavorites] = useState<Set<any>>(new Set());
 
   useEffect(() => {
     fetchDocuments();
   }, [fetchDocuments]);
 
-  const handleToggleFavorite = async (id: number) => {
+  const handleToggleFavorite = async (id: any) => {
     await toggleFavorite(id);
     setLocalFavorites(prev => {
       const newFavorites = new Set(prev);
@@ -27,11 +27,11 @@ export default function DocumentVault() {
     });
   };
 
-  const handleFolderClick = (id: number) => {
+  const handleFolderClick = (id: any) => {
     console.log('Open folder for document:', id);
   };
 
-  const handleDownloadClick = async (id: number) => {
+  const handleDownloadClick = async (id: any) => {
     await downloadDocument(id);
   };
 
