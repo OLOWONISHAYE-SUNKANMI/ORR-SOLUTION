@@ -48,14 +48,14 @@ export default function ORRRoleSection({ content, onUpdate }: ORRRoleSectionProp
   }, []);
 
   return (
-    <section className="w-full h-[60vh] flex justify-center items-center text-white px-6 md:px-12 lg:px-24 py-24 relative overflow-hidden font-poppins">
+    <section className="w-full min-h-[60vh] h-auto flex justify-center items-center text-white px-6 md:px-12 lg:px-24 py-16 md:py-24 relative overflow-hidden font-poppins">
       
 
       <div className="relative z-10 max-w-7xl mx-auto">
-        <h2 ref={titleRef} className="text-3xl md:text-4xl font-bold mt-40 mb-12 text-center">
+        <h2 ref={titleRef} className="text-3xl md:text-4xl font-bold mt-10 md:mt-40 mb-8 md:mb-12 text-center">
           <SafeHTMLRenderer data={language === 'it' ? t.orrRole.title : (orrRoleSection?.title || t.orrRole.title)} fallback={t.orrRole.title} />
         </h2>
-        <p ref={textRef} className="text-gray-300 text-center text-2xl mb-16 max-w-4xl mx-auto">
+        <p ref={textRef} className="text-gray-300 text-center text-lg md:text-2xl mb-10 md:mb-16 max-w-4xl mx-auto">
           <SafeHTMLRenderer data={language === 'it' ? t.orrRole.description : (orrRoleSection?.description || t.orrRole.description)} fallback={t.orrRole.description} />
         </p>
       </div>

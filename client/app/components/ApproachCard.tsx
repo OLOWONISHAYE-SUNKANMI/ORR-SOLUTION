@@ -88,19 +88,19 @@ export default function ApproachSection({ content, onUpdate }: ApproachSectionPr
   }, []);
 
   return (
-    <section ref={sectionRef} className="relative w-full flex flex-col items-start pr-4 py-20 bg-cover bg-center">
+    <section ref={sectionRef} className="relative w-full flex flex-col items-start pr-4 py-12 md:py-20 bg-cover bg-center">
       <h2 ref={titleRef} className="text-white text-3xl md:text-5xl font-semibold text-center mb-10 font-poppins w-full flex justify-center py-7">
         <SafeHTMLRenderer data={approachData?.title} fallback="Supporting Copy" />
       </h2>
 
-      <div className="relative">
+      <div className="relative w-full">
        
 
-        <div ref={cardRef} className="w-full max-w-7xl ml-0 bg border-t-[0.5rem] border-r-[0.5rem] border-b-[0.5rem] border-l-0 border-white/20 backdrop-blur-md bg-card z-1 rounded-tr-[91.25px] rounded-br-[91.25px] p-10 md:p-14 shadow-lg space-y-7 overflow-hidden">
-          <div ref={el => { nodesRef.current[0] = el; }} className="absolute right-[-28px] top-[20%] w-14 h-14 bg-[#0B2E4E] rounded-full flex items-center justify-center shadow-[0_0_25px_#3DFF7C]">
+        <div ref={cardRef} className="w-full max-w-7xl ml-0 bg border-t-[2px] md:border-t-[0.5rem] border-r-[2px] md:border-r-[0.5rem] border-b-[2px] md:border-b-[0.5rem] border-l-0 border-white/20 backdrop-blur-md bg-card z-1 rounded-tr-[40px] md:rounded-tr-[91.25px] rounded-br-[40px] md:rounded-br-[91.25px] p-6 sm:p-10 md:p-14 shadow-lg space-y-7 overflow-hidden">
+          <div ref={el => { nodesRef.current[0] = el; }} className="hidden md:flex absolute right-[-28px] top-[20%] w-14 h-14 bg-[#0B2E4E] rounded-full items-center justify-center shadow-[0_0_25px_#3DFF7C]">
             <div className="w-9 h-9 bg-[#3DFF7C] rounded-full" />
           </div>
-          <div ref={el => { nodesRef.current[1] = el; }} className="absolute right-[-28px] bottom-[20%] w-14 h-14 bg-[#0B2E4E] rounded-full flex items-center justify-center shadow-[0_0_25px_#3DFF7C]">
+          <div ref={el => { nodesRef.current[1] = el; }} className="hidden md:flex absolute right-[-28px] bottom-[20%] w-14 h-14 bg-[#0B2E4E] rounded-full items-center justify-center shadow-[0_0_25px_#3DFF7C]">
             <div className="w-9 h-9 bg-[#3DFF7C] rounded-full" />
           </div>
 

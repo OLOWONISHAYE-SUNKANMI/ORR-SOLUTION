@@ -91,7 +91,7 @@ export default function SchedulingPage() {
   });
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-6 sm:p-8 md:p-10 lg:p-14 star">
+    <div className="min-h-screen bg-background text-foreground p-4 sm:p-6 md:p-10 lg:p-14 star">
       <div className="mx-auto max-w-[1600px]">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
           <div>
@@ -117,12 +117,12 @@ export default function SchedulingPage() {
           </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-8 h-[calc(100vh-250px)]">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 h-auto lg:h-[calc(100vh-250px)]">
           <aside className="w-full lg:w-80 xl:w-96 flex-shrink-0 h-full">
             <EventSidebar items={events} isLoading={isLoading} />
           </aside>
 
-          <main className="flex-1 h-full min-h-[600px]">
+          <main className="flex-1 h-full min-h-[400px] md:min-h-[600px]">
             <GoogleCalendarView 
               events={events} 
               onSelectEvent={(event: any) => setSelectedEvent(event as EventItem)}

@@ -412,7 +412,7 @@ export default function DocumentWorkspace() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-6 lg:p-10">
+    <div className="min-h-screen bg-background p-4 md:p-6 lg:p-10">
       {/* Header Section */}
       <header className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
@@ -598,7 +598,7 @@ export default function DocumentWorkspace() {
       </nav>
 
       {/* Explorer Content */}
-      <div className="flex flex-col lg:flex-row gap-8">
+      <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
         <div className={clsx("flex-1 space-y-8 transition-all duration-500", showSummary ? "lg:max-w-[calc(100%-400px)]" : "w-full")}>
           {/* Folders Section */}
           {filteredFolders.length > 0 && (
@@ -646,7 +646,7 @@ export default function DocumentWorkspace() {
                 ))}
               </div>
             ) : (
-              <div className="bg-card/30 border border-white/10 rounded-[2rem] overflow-hidden">
+              <div className="bg-card/30 border border-white/10 rounded-[2rem] overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead className="bg-white/5">
                     <tr>
@@ -1082,7 +1082,7 @@ function GeminiSummaryPanel({ file, onClose, onOpen, onShare }: { file: any, onC
       initial={{ x: 400, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       exit={{ x: 400, opacity: 0 }}
-      className="w-full lg:w-[400px] bg-card/50 backdrop-blur-2xl border border-white/10 rounded-[3rem] p-8 flex flex-col h-[calc(100vh-12rem)] sticky top-32"
+      className="w-full lg:w-[400px] bg-card/50 backdrop-blur-2xl border border-white/10 rounded-[3rem] p-6 md:p-8 flex flex-col h-[calc(100vh-12rem)] sticky top-32"
     >
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-3">

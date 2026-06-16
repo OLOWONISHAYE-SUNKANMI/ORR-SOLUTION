@@ -112,7 +112,7 @@ export default function Dashboard() {
   };
 
   return (
-    <main className="min-h-full p-6 bg-background">
+    <main className="min-h-full p-4 md:p-6 bg-background">
       <div className="mx-auto space-y-6">
         {/* Header */}
         <header className="flex items-center justify-between">
@@ -221,7 +221,7 @@ export default function Dashboard() {
           {/* Main Content Area */}
           <div className="lg:col-span-2 space-y-6">
             {/* Welcome Card */}
-            <div className="bg-card border border-secondary rounded-xl p-6">
+            <div className="bg-card border border-secondary rounded-xl p-4 md:p-6">
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-16 h-16 rounded-full bg-gradient-primary flex items-center justify-center text-2xl">
                   👋
@@ -234,7 +234,7 @@ export default function Dashboard() {
             </div>
 
             {/* Performance Chart */}
-            <div className="bg-card border border-secondary rounded-xl p-6">
+            <div className="bg-card border border-secondary rounded-xl p-4 md:p-6">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-foreground">{interpolate(t.dashboard.page.overview.title)}</h3>
                 <div className="flex items-center gap-2 text-sm text-foreground opacity-60">
@@ -286,7 +286,7 @@ export default function Dashboard() {
               <h3 className="text-xl font-bold text-foreground">Insights & Activity</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Transaction Trends */}
-                <div className="bg-card border border-secondary rounded-xl p-6">
+                <div className="bg-card border border-secondary rounded-xl p-4 md:p-6">
                   <div className="flex items-center justify-between mb-6">
                     <div>
                       <h3 className="text-lg font-semibold text-foreground">Transaction Trends</h3>
@@ -338,7 +338,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* Activity Frequency */}
-                <div className="bg-card border border-secondary rounded-xl p-6">
+                <div className="bg-card border border-secondary rounded-xl p-4 md:p-6">
                   <div className="flex items-center justify-between mb-6">
                     <div>
                       <h3 className="text-lg font-semibold text-foreground">Activity Frequency</h3>
@@ -400,7 +400,7 @@ export default function Dashboard() {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Wallet Card */}
-            <div className="bg-card border border-secondary rounded-xl p-6">
+            <div className="bg-card border border-secondary rounded-xl p-4 md:p-6">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-lg bg-gradient-primary flex items-center justify-center">
                   <Wallet className="w-5 h-5 text-white" />
@@ -424,7 +424,7 @@ export default function Dashboard() {
             </div>
 
             {/* Quick Actions */}
-            <div className="bg-card border border-secondary rounded-xl p-6">
+            <div className="bg-card border border-secondary rounded-xl p-4 md:p-6">
               <h5 className="font-semibold text-foreground mb-4">{interpolate(t.dashboard.page.quickActions.title)}</h5>
               <div className="space-y-3">
                 {[
@@ -455,7 +455,7 @@ export default function Dashboard() {
             </div>
 
             {/* Upcoming Consultations */}
-            <div className="bg-card border border-secondary rounded-xl p-6">
+            <div className="bg-card border border-secondary rounded-xl p-4 md:p-6">
               <div className="flex items-center justify-between mb-4">
                 <h6 className="font-semibold text-foreground">{interpolate(t.dashboard.page.upcomingConsultations.title)}</h6>
                 {upcomingMeetings.length > 0 && (

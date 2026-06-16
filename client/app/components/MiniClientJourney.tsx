@@ -115,7 +115,7 @@ export default function MiniClientJourney({ content, onUpdate }: MiniClientJourn
                   content={activeMessages[currentIndex]}
                   onSave={handleMessageSave}
                   tag="p"
-                  className="leading-relaxed text-[18px] font-medium"
+                  className="leading-relaxed text-base md:text-[18px] font-medium"
                   placeholder="Enter message..."
                   multiline
                 />
@@ -130,7 +130,7 @@ export default function MiniClientJourney({ content, onUpdate }: MiniClientJourn
             <button
               key={idx}
               onClick={() => setCurrentIndex(idx)}
-              className={`px-5 py-2 sm:px-6 sm:py-2.5 cursor-pointer rounded-full text-[18px] font-semibold transition-all duration-300 border ${currentIndex === idx
+              className={`px-4 py-2 sm:px-6 sm:py-2.5 cursor-pointer rounded-full text-sm sm:text-[18px] font-semibold transition-all duration-300 border ${currentIndex === idx
                 ? "bg-primary text-primary-foreground border-primary shadow-[0_0_15px_rgba(14,194,119,0.4)] scale-105"
                 : "bg-primary/5 text-foreground/70 hover:bg-primary/10 hover:text-foreground border-primary/20"
                 }`}

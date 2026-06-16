@@ -95,7 +95,7 @@ export default function WalletDashboard() {
     <div className="w-full max-w-6xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Header & Balance Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-gradient-to-br from-[var(--color-card)] to-[var(--color-surface)] border border-[var(--color-border)] rounded-3xl p-8 relative overflow-hidden group shadow-2xl">
+        <div className="lg:col-span-2 bg-gradient-to-br from-[var(--color-card)] to-[var(--color-surface)] border border-[var(--color-border)] rounded-3xl p-4 md:p-8 relative overflow-hidden group shadow-2xl">
           {/* Decorative background element */}
           <div className="absolute top-[-50%] right-[-10%] w-[300px] h-[300px] bg-[#22C55E]/10 blur-[100px] rounded-full group-hover:bg-[#22C55E]/20 transition-all duration-700"></div>
 
@@ -133,7 +133,7 @@ export default function WalletDashboard() {
           </div>
         </div>
 
-        <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-3xl p-8 flex flex-col justify-center items-center text-center space-y-4">
+        <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-3xl p-4 md:p-8 flex flex-col justify-center items-center text-center space-y-4">
           <div className="w-16 h-16 bg-[#1E3A4B] rounded-2xl flex items-center justify-center mb-2">
             <Clock className="w-8 h-8 text-[#22C55E]" />
           </div>
@@ -144,7 +144,7 @@ export default function WalletDashboard() {
 
       {/* Transaction History Section */}
       <div className="bg-card/30 backdrop-blur-md border border-[var(--color-border)] rounded-3xl overflow-hidden shadow-xl">
-        <div className="p-8 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--color-border)]">
+        <div className="p-4 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--color-border)]">
           <h3 className="text-xl font-bold text-white flex items-center gap-3">
             {interpolate(t.dashboard.account.wallet.transactions.title)}
             <span className="text-xs bg-[#1E3A4B] px-2 py-1 rounded-lg text-gray-400 font-normal">
@@ -275,7 +275,7 @@ export default function WalletDashboard() {
         </div>
 
         {/* Pagination */}
-        <div className="p-8 border-t border-[var(--color-border)] flex items-center justify-between">
+        <div className="p-4 md:p-8 border-t border-[var(--color-border)] flex items-center justify-between">
           <p className="text-xs text-gray-400 font-medium">
             Showing {filteredTransactions.length} results
           </p>

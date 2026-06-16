@@ -10,7 +10,7 @@ export default function DashboardOverview() {
   return (
     <main className="min-h-screen bg-background text-foreground relative overflow-hidden">
 
-      <div className="relative z-10 mx-auto px-6 py-12">
+      <div className="relative z-10 mx-auto px-4 md:px-6 py-8 md:py-12">
         {/* HEADER */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-10 gap-6">
           <h1 className="text-[#13be77] text-2xl font-semibold">
@@ -29,7 +29,7 @@ export default function DashboardOverview() {
         </div>
 
         {/* MAIN WRAPPER */}
-        <div className="bg-card border border-secondary rounded-3xl px-6 py-10 space-y-10">
+        <div className="bg-card border border-secondary rounded-3xl px-4 md:px-6 py-6 md:py-10 space-y-10">
 
           {/* TOP ROW */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
