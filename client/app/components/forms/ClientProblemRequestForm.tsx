@@ -1,23 +1,92 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Send, Briefcase, AlertCircle, Target, Tag, FileText, Paperclip } from "lucide-react";
+import { Send, Briefcase, AlertCircle, Target, Tag, FileText, Paperclip, Save } from "lucide-react";
 import { motion } from "framer-motion";
+import { useAuthStore } from "@/store/authStore";
+import { useRequestStore, CreateRequestPayload } from "@/store/requestStore";
 
-// Request Status enum based on workflow
-export type RequestStatus = 
-  | "Draft"
-  | "Submitted"
-  | "Pending ORR Review"
-  | "Clarification Requested"
-  | "Approved for Meeting"
-  | "Approved for PM Assignment"
-  | "Converted to Project"
-  | "Rejected"
-  | "Closed"
-  | "Archived";
+// ── Field option maps (from PDF schema) ──
 
-// Types matching the provided schema
+const REQUEST_TYPE_OPTIONS = [
+  { value: "advice", label: "I need advice" },
+  { value: "written_review", label: "I need a written review or report" },
+  { value: "operational_problem", label: "I need help solving an operational problem" },
+  { value: "compliance_regulatory", label: "I need compliance or regulatory support" },
+  { value: "it_systems", label: "I need IT / systems support" },
+  { value: "land_agriculture_environment", label: "I need land, agriculture, or environmental support" },
+  { value: "ongoing_support", label: "I need ongoing support" },
+  { value: "not_sure", label: "I am not sure" },
+];
+
+const SERVICE_AREA_OPTIONS = [
+  { value: "strategy_advisory_compliance", label: "Strategy Advisory & Compliance" },
+  { value: "operational_systems_infrastructure", label: "Operational Systems & Infrastructure" },
+  { value: "living_systems_regeneration", label: "Living Systems Regeneration" },
+  { value: "not_sure", label: "Not sure (Admin/PM will classify later)" },
+];
+
+const EXPECTED_SUPPORT_OPTIONS = [
+  "Initial consultation", "Written advice", "Document review",
+  "Technical review", "Compliance pathway", "Project planning",
+  "Implementation support", "System setup", "Consultant matching",
+  "Ongoing retainer support", "Other",
+];
+
+const EXPECTED_DELIVERABLE_OPTIONS = [
+  "Meeting summary", "Advisory note", "Written report",
+  "Technical specification", "Implementation plan", "Compliance review",
+  "Risk assessment", "Project roadmap", "Client presentation",
+  "Not sure", "Other",
+];
+
+const URGENCY_OPTIONS = [
+  { value: "normal", label: "Normal" },
+  { value: "priority", label: "Priority" },
+  { value: "urgent", label: "Urgent" },
+  { value: "critical", label: "Critical" },
+];
+
+const BUDGET_OPTIONS = [
+  { value: "not_sure", label: "Not sure" },
+  { value: "small_initial_review", label: "Small initial review only" },
+  { value: "fixed_project_budget", label: "Fixed project budget" },
+  { value: "retainer_support", label: "Retainer support" },
+  { value: "prefer_to_discuss", label: "I prefer to discuss" },
+];
+
+const SECTOR_OPTIONS = [
+  "Agriculture", "IT / Software", "Regulatory Affairs", "Environment",
+  "Forestry", "Construction", "Finance", "Import / Export",
+  "Immigration / Residency", "Healthcare", "Manufacturing", "Food",
+  "Legal / Compliance", "Real estate / land", "Other",
+];
+
+const SENSITIVITY_OPTIONS = [
+  { value: "standard", label: "Standard" },
+  { value: "confidential", label: "Confidential" },
+  { value: "highly_confidential", label: "Highly Confidential" },
+  { value: "restricted", label: "Restricted / commercially sensitive" },
+];
+
+const NEXT_STEP_OPTIONS = [
+  { value: "schedule_consultation", label: "Schedule a first consultation" },
+  { value: "receive_feedback", label: "Receive initial feedback from ORR" },
+  { value: "upload_documents", label: "Upload documents first" },
+  { value: "discuss_pricing", label: "Discuss pricing" },
+  { value: "not_sure", label: "I am not sure" },
+];
+
+const CONTACT_METHOD_OPTIONS = [
+  "Portal message", "Email", "Phone", "Video meeting", "WhatsApp",
+];
+
+const LANGUAGE_OPTIONS = [
+  "English", "Maltese", "Italian", "French", "Spanish", "Other",
+];
+
+// ── Form Data Interface ──
+
 interface FormData {
   requestTitle: string;
   mainRequestType: string;
@@ -50,66 +119,82 @@ interface FormData {
   aiProcessingNotice: boolean;
 }
 
-// Mock user context to simulate the "System Linkage" requirements
-const MOCK_USER_CONTEXT = {
-  clientId: "CL-9823-A",
-  clientName: "Acme Corp Ltd.",
-  submittedBy: "USR-4592"
+const INITIAL_FORM_DATA: FormData = {
+  requestTitle: "",
+  mainRequestType: "",
+  orrServiceArea: "",
+  shortDescription: "",
+  desiredOutcome: "",
+  backgroundContext: "",
+  mainQuestion: "",
+  currentChallenge: "",
+  actionsTaken: "",
+  decisionNeeded: "",
+  expectedSupport: [],
+  expectedDeliverable: [],
+  urgency: "",
+  targetDate: "",
+  budgetExpectation: "",
+  sector: [],
+  jurisdiction: "",
+  location: "",
+  hasDocuments: false,
+  documents: [],
+  sensitivityLevel: "",
+  confidentialityAgreed: false,
+  preferredNextStep: "",
+  preferredContactMethod: [],
+  preferredMeetingLanguage: [],
+  confirmAccuracy: false,
+  confirmAuthority: false,
+  confirmNoEmergency: false,
+  aiProcessingNotice: false,
 };
 
+// ── Helper to map form data → API payload ──
+
+function formToPayload(formData: FormData): CreateRequestPayload {
+  return {
+    request_title: formData.requestTitle,
+    main_request_type: formData.mainRequestType,
+    orr_service_area: formData.orrServiceArea || undefined,
+    short_description: formData.shortDescription,
+    desired_outcome: formData.desiredOutcome,
+    background_context: formData.backgroundContext || undefined,
+    main_question: formData.mainQuestion || undefined,
+    current_challenge: formData.currentChallenge || undefined,
+    actions_taken: formData.actionsTaken || undefined,
+    decision_needed: formData.decisionNeeded || undefined,
+    expected_support: formData.expectedSupport,
+    expected_deliverable: formData.expectedDeliverable,
+    urgency: formData.urgency || undefined,
+    target_date: formData.targetDate || null,
+    budget_expectation: formData.budgetExpectation || undefined,
+    sector: formData.sector,
+    jurisdiction: formData.jurisdiction || undefined,
+    location: formData.location || undefined,
+    has_documents: formData.hasDocuments,
+    sensitivity_level: formData.sensitivityLevel || undefined,
+    confidentiality_agreed: formData.confidentialityAgreed,
+    preferred_next_step: formData.preferredNextStep || undefined,
+    preferred_contact_method: formData.preferredContactMethod,
+    preferred_meeting_language: formData.preferredMeetingLanguage,
+    confirm_accuracy: formData.confirmAccuracy,
+    confirm_authority: formData.confirmAuthority,
+    confirm_no_emergency: formData.confirmNoEmergency,
+    ai_processing_notice: formData.aiProcessingNotice,
+  };
+}
+
+
 export default function ClientProblemRequestForm() {
-  const [formData, setFormData] = useState<FormData>({
-    requestTitle: "",
-    mainRequestType: "",
-    orrServiceArea: "",
-    shortDescription: "",
-    desiredOutcome: "",
-    backgroundContext: "",
-    mainQuestion: "",
-    currentChallenge: "",
-    actionsTaken: "",
-    decisionNeeded: "",
-    expectedSupport: [],
-    expectedDeliverable: [],
-    urgency: "",
-    targetDate: "",
-    budgetExpectation: "",
-    sector: [],
-    jurisdiction: "",
-    location: "",
-    hasDocuments: false,
-    documents: [],
-    sensitivityLevel: "",
-    confidentialityAgreed: false,
-    preferredNextStep: "",
-    preferredContactMethod: [],
-    preferredMeetingLanguage: [],
-    confirmAccuracy: false,
-    confirmAuthority: false,
-    confirmNoEmergency: false,
-    aiProcessingNotice: false,
-  });
+  const { user } = useAuthStore();
+  const { createRequest, submitRequest, uploadDocuments, isSubmitting, currentRequest } = useRequestStore();
 
-  const [systemLinkage, setSystemLinkage] = useState({
-    requestId: "",
-    submissionDate: ""
-  });
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState<FormData>(INITIAL_FORM_DATA);
   const [isSuccess, setIsSuccess] = useState(false);
-
-  // Auto-generate Request ID on mount (System Linkage)
-  useEffect(() => {
-    const generateRequestId = () => {
-      const randomNum = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
-      return `ORR-REQ-${randomNum}`;
-    };
-
-    setSystemLinkage({
-      requestId: generateRequestId(),
-      submissionDate: new Date().toISOString()
-    });
-  }, [isSuccess]);
+  const [savedRequestId, setSavedRequestId] = useState<string>("");
+  const [savedPk, setSavedPk] = useState<number | null>(null);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -118,7 +203,10 @@ export default function ClientProblemRequestForm() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleCheckboxChange = (field: "expectedSupport" | "expectedDeliverable" | "sector" | "preferredContactMethod" | "preferredMeetingLanguage", value: string) => {
+  const handleCheckboxChange = (
+    field: "expectedSupport" | "expectedDeliverable" | "sector" | "preferredContactMethod" | "preferredMeetingLanguage",
+    value: string
+  ) => {
     setFormData((prev) => {
       const currentList = prev[field];
       if (currentList.includes(value)) {
@@ -140,7 +228,6 @@ export default function ClientProblemRequestForm() {
         documents: [...prev.documents, ...newDocs],
       }));
     }
-    // Clear input so the same file can be selected again if removed
     e.target.value = "";
   };
 
@@ -159,152 +246,92 @@ export default function ClientProblemRequestForm() {
     }));
   };
 
+  // ── Save as Draft ──
   const handleSaveDraft = async () => {
-    setIsSubmitting(true);
-    
-    const draftPayload = {
-      // System Linkage
-      requestId: systemLinkage.requestId,
-      clientName: MOCK_USER_CONTEXT.clientName,
-      submittedBy: MOCK_USER_CONTEXT.submittedBy,
-      submissionDate: new Date().toISOString(),
-      
-      // Request Basics
-      ...formData,
-      
-      // Clean up file references for logging mock
-      documents: formData.documents.map(d => ({
-        fileName: d.file.name,
-        size: d.file.size,
-        description: d.description
-      })),
-      
-      // Backend Status Tracking
-      status: "Draft" as RequestStatus,
+    const payload = formToPayload(formData);
 
-      // Internal Review Tracking (Not visible to client, initialized for backend)
-      internalReview: {
-        adminClassification: null,
-        pmAssignmentLink: null,
-        projectConversionLinks: []
-      },
-      
-      // Audit Trail
-      auditTrail: {
-        lastUpdated: new Date().toISOString(),
-        lastUpdatedBy: MOCK_USER_CONTEXT.clientId,
-        versionHistory: []
+    if (savedPk) {
+      // Update existing draft
+      const updated = await useRequestStore.getState().updateRequest(savedPk, payload);
+      if (updated) {
+        setSavedRequestId(updated.request_id);
       }
-    };
+    } else {
+      // Create new draft
+      const created = await createRequest(payload);
+      if (created) {
+        setSavedRequestId(created.request_id);
+        setSavedPk(created.id);
 
-    console.log("Saving Draft Payload to Backend:", JSON.stringify(draftPayload, null, 2));
-    
-    setTimeout(() => {
-      setIsSubmitting(false);
-      alert("Draft saved successfully. You can continue editing later.");
-    }, 1500);
+        // Upload documents if any
+        if (formData.documents.length > 0) {
+          const files = formData.documents.map((d) => d.file);
+          const descriptions = formData.documents.map((d) => d.description);
+          await uploadDocuments(created.id, files, descriptions);
+        }
+      }
+    }
   };
 
+  // ── Submit Request ──
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
 
-    // Compiling the final structured payload matching workflow Step 5
-    const finalPayload = {
-      // System Linkage
-      requestId: systemLinkage.requestId,
-      clientId: MOCK_USER_CONTEXT.clientId,
-      clientName: MOCK_USER_CONTEXT.clientName,
-      submittedBy: MOCK_USER_CONTEXT.submittedBy,
-      submissionDate: new Date().toISOString(),
+    const payload = formToPayload(formData);
+    let pk = savedPk;
 
-      // Request Basics
-      ...formData,
+    if (pk) {
+      // Update existing draft before submitting
+      await useRequestStore.getState().updateRequest(pk, payload);
+    } else {
+      // Create the request first
+      const created = await createRequest(payload);
+      if (!created) return;
+      pk = created.id;
+      setSavedPk(pk);
+      setSavedRequestId(created.request_id);
+    }
 
-      // Clean up file references for logging mock
-      documents: formData.documents.map(d => ({
-        fileName: d.file.name,
-        size: d.file.size,
-        description: d.description
-      })),
+    // Upload documents if any
+    if (formData.documents.length > 0 && pk) {
+      const files = formData.documents.map((d) => d.file);
+      const descriptions = formData.documents.map((d) => d.description);
+      await uploadDocuments(pk, files, descriptions);
+    }
 
-      // Backend Status Tracking
-      status: "Submitted" as RequestStatus,
-
-      // Internal Review Tracking (Not visible to client, initialized for backend)
-      internalReview: {
-        adminClassification: null,
-        pmAssignmentLink: null,
-        projectConversionLinks: []
-      },
-      
-      // Audit Trail
-      auditTrail: {
-        lastUpdated: new Date().toISOString(),
-        lastUpdatedBy: MOCK_USER_CONTEXT.clientId,
-        versionHistory: []
+    // Submit the request
+    if (pk) {
+      const submitted = await submitRequest(pk);
+      if (submitted) {
+        setSavedRequestId(submitted.request_id);
+        setIsSuccess(true);
       }
-    };
-
-    // Simulating API call
-    setTimeout(() => {
-      console.log("=== SUBMITTED CLIENT REQUEST BRIEF ===");
-      console.log("Structured Payload for Backend:", finalPayload);
-      setIsSubmitting(false);
-      setIsSuccess(true);
-    }, 1500);
+    }
   };
 
+  // ── Success State ──
   if (isSuccess) {
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="max-w-2xl mx-auto mt-10 p-8 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl text-center"
+        className="max-w-2xl mx-auto mt-10 p-8 bg-card border border-secondary rounded-2xl shadow-xl text-center"
       >
         <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mx-auto mb-6">
           <Send className="w-8 h-8" />
         </div>
-        <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-4">Request Submitted Successfully!</h2>
-        <p className="text-zinc-600 dark:text-zinc-400 mb-2">
-          Your request has been securely logged with Reference ID: <strong className="text-zinc-900 dark:text-white">{systemLinkage.requestId}</strong>
+        <h2 className="text-2xl font-bold text-foreground mb-4">Request Submitted Successfully!</h2>
+        <p className="text-foreground opacity-60 mb-2">
+          Your request has been securely logged with Reference ID: <strong className="text-foreground">{savedRequestId}</strong>
         </p>
-        <p className="text-zinc-600 dark:text-zinc-400 mb-8">
+        <p className="text-foreground opacity-60 mb-8">
           An Admin and Project Manager will review your brief shortly.
         </p>
         <button
           onClick={() => {
-            setFormData({
-              requestTitle: "",
-              mainRequestType: "",
-              orrServiceArea: "",
-              shortDescription: "",
-              desiredOutcome: "",
-              backgroundContext: "",
-              mainQuestion: "",
-              currentChallenge: "",
-              actionsTaken: "",
-              decisionNeeded: "",
-              expectedSupport: [],
-              expectedDeliverable: [],
-              urgency: "",
-              targetDate: "",
-              budgetExpectation: "",
-              sector: [],
-              jurisdiction: "",
-              location: "",
-              hasDocuments: false,
-              documents: [],
-              sensitivityLevel: "",
-              confidentialityAgreed: false,
-              preferredNextStep: "",
-              preferredContactMethod: [],
-              preferredMeetingLanguage: [],
-              confirmAccuracy: false,
-              confirmAuthority: false,
-              confirmNoEmergency: false,
-              aiProcessingNotice: false,
-            });
+            setFormData(INITIAL_FORM_DATA);
+            setSavedPk(null);
+            setSavedRequestId("");
             setIsSuccess(false);
           }}
           className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors"
@@ -315,23 +342,24 @@ export default function ClientProblemRequestForm() {
     );
   }
 
+  // ── Form UI ──
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-3xl mx-auto bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl overflow-hidden"
+      className="max-w-3xl mx-auto bg-card border border-secondary rounded-2xl shadow-xl overflow-hidden"
     >
-      <div className="p-8 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50">
-        <h2 className="text-2xl font-bold text-zinc-900 dark:text-white flex items-center gap-2 mb-2">
+      <div className="p-8 border-b border-secondary bg-secondary/20">
+        <h2 className="text-2xl font-bold text-foreground flex items-center gap-2 mb-2">
           <Briefcase className="w-6 h-6 text-blue-600" />
           Client Problem / Request Brief
         </h2>
 
         {/* System Linkage Display */}
-        <div className="mt-4 flex flex-wrap gap-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 bg-white dark:bg-zinc-800/50 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 inline-flex">
-          <span className="flex items-center gap-1">Request ID: <strong className="text-zinc-700 dark:text-zinc-300">{systemLinkage.requestId || 'Generating...'}</strong></span>
+        <div className="mt-4 flex flex-wrap gap-4 text-xs font-medium text-foreground opacity-50 bg-card/50 p-3 rounded-lg border border-secondary inline-flex">
+          <span className="flex items-center gap-1">Request ID: <strong className="text-foreground opacity-90">{savedRequestId || 'Will be generated on save'}</strong></span>
           <span className="text-zinc-300 dark:text-zinc-700">|</span>
-          <span className="flex items-center gap-1">Client: <strong className="text-zinc-700 dark:text-zinc-300">{MOCK_USER_CONTEXT.clientName}</strong></span>
+          <span className="flex items-center gap-1">Submitted by: <strong className="text-foreground opacity-90">{user?.first_name} {user?.last_name}</strong></span>
         </div>
       </div>
 
@@ -339,7 +367,7 @@ export default function ClientProblemRequestForm() {
 
         {/* Request Title */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+          <label className="text-sm font-medium text-foreground opacity-90 flex items-center gap-2">
             <FileText className="w-4 h-4 text-zinc-400" />
             Give this request a short title
           </label>
@@ -349,15 +377,15 @@ export default function ClientProblemRequestForm() {
             required
             value={formData.requestTitle}
             onChange={handleInputChange}
-            className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-            placeholder="Example: “Need help entering the Italian market”, “CRM process problem”"
+            className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+            placeholder='Example: "Need help entering the Italian market", "CRM process problem"'
           />
         </div>
 
         {/* Request Type & Service Area */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+            <label className="text-sm font-medium text-foreground opacity-90 flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-zinc-400" />
               What do you need ORR to help with?
             </label>
@@ -366,22 +394,17 @@ export default function ClientProblemRequestForm() {
               required
               value={formData.mainRequestType}
               onChange={handleInputChange}
-              className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all appearance-none"
+              className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all appearance-none"
             >
               <option value="" disabled>Select request type...</option>
-              <option value="I need advice">I need advice</option>
-              <option value="I need a written review or report">I need a written review or report</option>
-              <option value="I need help solving an operational problem">I need help solving an operational problem</option>
-              <option value="I need compliance or regulatory support">I need compliance or regulatory support</option>
-              <option value="I need IT / systems support">I need IT / systems support</option>
-              <option value="I need land, agriculture, or environmental support">I need land, agriculture, or environmental support</option>
-              <option value="I need ongoing support">I need ongoing support</option>
-              <option value="I am not sure">I am not sure</option>
+              {REQUEST_TYPE_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
             </select>
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+            <label className="text-sm font-medium text-foreground opacity-90 flex items-center gap-2">
               <Tag className="w-4 h-4 text-zinc-400" />
               Which ORR service area best fits?
               <span className="text-xs text-zinc-400 font-normal">(Optional)</span>
@@ -390,20 +413,19 @@ export default function ClientProblemRequestForm() {
               name="orrServiceArea"
               value={formData.orrServiceArea}
               onChange={handleInputChange}
-              className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all appearance-none"
+              className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all appearance-none"
             >
               <option value="" disabled>Select service area...</option>
-              <option value="Strategy Advisory & Compliance">Strategy Advisory & Compliance</option>
-              <option value="Operational Systems & Infrastructure">Operational Systems & Infrastructure</option>
-              <option value="Living Systems Regeneration">Living Systems Regeneration</option>
-              <option value="Not sure">Not sure (Admin/PM will classify later)</option>
+              {SERVICE_AREA_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
             </select>
           </div>
         </div>
 
         {/* Short Description */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          <label className="text-sm font-medium text-foreground opacity-90">
             Briefly describe the issue, objective, or problem you want ORR to assess.
           </label>
           <textarea
@@ -412,14 +434,14 @@ export default function ClientProblemRequestForm() {
             value={formData.shortDescription}
             onChange={handleInputChange}
             rows={4}
-            className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none"
+            className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none"
             placeholder="Please provide the core details of your request. This will feed into our AI project summary generation..."
           />
         </div>
 
         {/* Desired Outcome */}
-        <div className="space-y-2 pb-6 border-b border-zinc-200 dark:border-zinc-800">
-          <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+        <div className="space-y-2 pb-6 border-b border-secondary">
+          <label className="text-sm font-medium text-foreground opacity-90 flex items-center gap-2">
             <Target className="w-4 h-4 text-zinc-400" />
             What outcome are you hoping to achieve?
           </label>
@@ -429,19 +451,19 @@ export default function ClientProblemRequestForm() {
             value={formData.desiredOutcome}
             onChange={handleInputChange}
             rows={3}
-            className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none"
+            className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none"
             placeholder="Describe what success looks like (e.g., advice, decision support, implementation, compliance...)"
           />
         </div>
 
         {/* --- PROBLEM DETAIL SECTION --- */}
         <div className="pt-2">
-          <h3 className="text-lg font-semibold text-zinc-900 dark:text-white mb-4">Problem Detail</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-4">Problem Detail</h3>
           <div className="space-y-6">
 
             {/* Background / Context */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <label className="text-sm font-medium text-foreground opacity-90">
                 Provide any background information that may help ORR understand the situation.
                 <span className="text-xs text-zinc-400 font-normal ml-2">(Recommended)</span>
               </label>
@@ -450,14 +472,14 @@ export default function ClientProblemRequestForm() {
                 value={formData.backgroundContext}
                 onChange={handleInputChange}
                 rows={3}
-                className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none"
+                className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none"
                 placeholder="Background context..."
               />
             </div>
 
             {/* Main Question for ORR */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <label className="text-sm font-medium text-foreground opacity-90">
                 If you could ask ORR one main question, what would it be?
                 <span className="text-xs text-zinc-400 font-normal ml-2">(Recommended)</span>
               </label>
@@ -466,14 +488,14 @@ export default function ClientProblemRequestForm() {
                 value={formData.mainQuestion}
                 onChange={handleInputChange}
                 rows={2}
-                className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none"
+                className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none"
                 placeholder="Your main question..."
               />
             </div>
 
             {/* Current Challenge */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <label className="text-sm font-medium text-foreground opacity-90">
                 What is currently blocking progress or creating difficulty?
                 <span className="text-xs text-zinc-400 font-normal ml-2">(Recommended)</span>
               </label>
@@ -482,7 +504,7 @@ export default function ClientProblemRequestForm() {
                 value={formData.currentChallenge}
                 onChange={handleInputChange}
                 rows={2}
-                className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none"
+                className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none"
                 placeholder="What is the bottleneck or challenge..."
               />
             </div>
@@ -490,7 +512,7 @@ export default function ClientProblemRequestForm() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Actions Already Taken */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <label className="text-sm font-medium text-foreground opacity-90">
                   Tell us what you have already tried, submitted, built, discussed, or decided.
                   <span className="text-xs text-zinc-400 font-normal ml-2">(Optional)</span>
                 </label>
@@ -499,14 +521,14 @@ export default function ClientProblemRequestForm() {
                   value={formData.actionsTaken}
                   onChange={handleInputChange}
                   rows={3}
-                  className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none"
+                  className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none"
                   placeholder="Previous actions..."
                 />
               </div>
 
               {/* Decision Needed */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <label className="text-sm font-medium text-foreground opacity-90">
                   Is there a decision you need to make? If yes, describe it.
                   <span className="text-xs text-zinc-400 font-normal ml-2">(Optional)</span>
                 </label>
@@ -515,7 +537,7 @@ export default function ClientProblemRequestForm() {
                   value={formData.decisionNeeded}
                   onChange={handleInputChange}
                   rows={3}
-                  className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none"
+                  className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none"
                   placeholder="Required decision..."
                 />
               </div>
@@ -525,19 +547,19 @@ export default function ClientProblemRequestForm() {
         </div>
 
         {/* --- SCOPE & EXPECTATIONS SECTION --- */}
-        <div className="pt-6 border-t border-zinc-200 dark:border-zinc-800">
-          <h3 className="text-lg font-semibold text-zinc-900 dark:text-white mb-4">Scope & Expectations</h3>
+        <div className="pt-6 border-t border-secondary">
+          <h3 className="text-lg font-semibold text-foreground mb-4">Scope & Expectations</h3>
           <div className="space-y-8">
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Expected Support */}
               <div className="space-y-3">
-                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <label className="text-sm font-medium text-foreground opacity-90">
                   What type of support do you expect from ORR?
                   <span className="text-xs text-zinc-400 font-normal ml-2">(Select all that apply)</span>
                 </label>
-                <div className="space-y-2 max-h-48 overflow-y-auto p-2 border border-zinc-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-800/50">
-                  {["Initial consultation", "Written advice", "Document review", "Technical review", "Compliance pathway", "Project planning", "Implementation support", "System setup", "Consultant matching", "Ongoing retainer support", "Other"].map((opt) => (
+                <div className="space-y-2 max-h-48 overflow-y-auto p-2 border border-secondary rounded-xl bg-card/50">
+                  {EXPECTED_SUPPORT_OPTIONS.map((opt) => (
                     <label key={opt} className="flex items-center gap-3 cursor-pointer p-1">
                       <input
                         type="checkbox"
@@ -545,7 +567,7 @@ export default function ClientProblemRequestForm() {
                         onChange={() => handleCheckboxChange("expectedSupport", opt)}
                         className="w-4 h-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
                       />
-                      <span className="text-sm text-zinc-700 dark:text-zinc-300">{opt}</span>
+                      <span className="text-sm text-foreground opacity-90">{opt}</span>
                     </label>
                   ))}
                 </div>
@@ -553,12 +575,12 @@ export default function ClientProblemRequestForm() {
 
               {/* Expected Deliverable */}
               <div className="space-y-3">
-                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <label className="text-sm font-medium text-foreground opacity-90">
                   What would you like to receive from ORR?
                   <span className="text-xs text-zinc-400 font-normal ml-2">(Select all that apply)</span>
                 </label>
-                <div className="space-y-2 max-h-48 overflow-y-auto p-2 border border-zinc-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-800/50">
-                  {["Meeting summary", "Advisory note", "Written report", "Technical specification", "Implementation plan", "Compliance review", "Risk assessment", "Project roadmap", "Client presentation", "Not sure", "Other"].map((opt) => (
+                <div className="space-y-2 max-h-48 overflow-y-auto p-2 border border-secondary rounded-xl bg-card/50">
+                  {EXPECTED_DELIVERABLE_OPTIONS.map((opt) => (
                     <label key={opt} className="flex items-center gap-3 cursor-pointer p-1">
                       <input
                         type="checkbox"
@@ -566,7 +588,7 @@ export default function ClientProblemRequestForm() {
                         onChange={() => handleCheckboxChange("expectedDeliverable", opt)}
                         className="w-4 h-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
                       />
-                      <span className="text-sm text-zinc-700 dark:text-zinc-300">{opt}</span>
+                      <span className="text-sm text-foreground opacity-90">{opt}</span>
                     </label>
                   ))}
                 </div>
@@ -576,26 +598,25 @@ export default function ClientProblemRequestForm() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Urgency */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <label className="text-sm font-medium text-foreground opacity-90">
                   How urgent is this request?
                 </label>
                 <select
                   name="urgency"
                   value={formData.urgency}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all appearance-none"
+                  className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all appearance-none"
                 >
                   <option value="" disabled>Select urgency...</option>
-                  <option value="Normal">Normal</option>
-                  <option value="Priority">Priority</option>
-                  <option value="Urgent">Urgent</option>
-                  <option value="Critical">Critical</option>
+                  {URGENCY_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
                 </select>
               </div>
 
               {/* Target Date */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <label className="text-sm font-medium text-foreground opacity-90">
                   Target Date / Deadline
                   <span className="text-xs text-zinc-400 font-normal ml-2">(Optional)</span>
                 </label>
@@ -604,13 +625,13 @@ export default function ClientProblemRequestForm() {
                   name="targetDate"
                   value={formData.targetDate}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                  className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
                 />
               </div>
 
               {/* Budget Expectation */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <label className="text-sm font-medium text-foreground opacity-90">
                   Budget Expectation
                   <span className="text-xs text-zinc-400 font-normal ml-2">(Optional)</span>
                 </label>
@@ -618,14 +639,12 @@ export default function ClientProblemRequestForm() {
                   name="budgetExpectation"
                   value={formData.budgetExpectation}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all appearance-none"
+                  className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all appearance-none"
                 >
                   <option value="" disabled>Select budget...</option>
-                  <option value="Not sure">Not sure</option>
-                  <option value="Small initial review only">Small initial review only</option>
-                  <option value="Fixed project budget">Fixed project budget</option>
-                  <option value="Retainer support">Retainer support</option>
-                  <option value="I prefer to discuss">I prefer to discuss</option>
+                  {BUDGET_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -634,19 +653,19 @@ export default function ClientProblemRequestForm() {
         </div>
 
         {/* --- SECTOR & DOMAIN SECTION --- */}
-        <div className="pt-6 border-t border-zinc-200 dark:border-zinc-800">
-          <h3 className="text-lg font-semibold text-zinc-900 dark:text-white mb-4">Sector & Domain</h3>
+        <div className="pt-6 border-t border-secondary">
+          <h3 className="text-lg font-semibold text-foreground mb-4">Sector & Domain</h3>
           <div className="space-y-8">
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Sector */}
               <div className="space-y-3">
-                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <label className="text-sm font-medium text-foreground opacity-90">
                   Which sector or area does this request relate to?
                   <span className="text-xs text-zinc-400 font-normal ml-2">(Select all that apply)</span>
                 </label>
-                <div className="space-y-2 max-h-48 overflow-y-auto p-2 border border-zinc-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-800/50">
-                  {["Agriculture", "IT / Software", "Regulatory Affairs", "Environment", "Forestry", "Construction", "Finance", "Import / Export", "Immigration / Residency", "Healthcare", "Manufacturing", "Food", "Legal / Compliance", "Real estate / land", "Other"].map((opt) => (
+                <div className="space-y-2 max-h-48 overflow-y-auto p-2 border border-secondary rounded-xl bg-card/50">
+                  {SECTOR_OPTIONS.map((opt) => (
                     <label key={opt} className="flex items-center gap-3 cursor-pointer p-1">
                       <input
                         type="checkbox"
@@ -654,7 +673,7 @@ export default function ClientProblemRequestForm() {
                         onChange={() => handleCheckboxChange("sector", opt)}
                         className="w-4 h-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
                       />
-                      <span className="text-sm text-zinc-700 dark:text-zinc-300">{opt}</span>
+                      <span className="text-sm text-foreground opacity-90">{opt}</span>
                     </label>
                   ))}
                 </div>
@@ -663,7 +682,7 @@ export default function ClientProblemRequestForm() {
               <div className="space-y-6">
                 {/* Jurisdiction */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  <label className="text-sm font-medium text-foreground opacity-90">
                     Country / Jurisdiction Involved
                     <span className="text-xs text-zinc-400 font-normal ml-2">(Recommended)</span>
                   </label>
@@ -672,17 +691,17 @@ export default function ClientProblemRequestForm() {
                     name="jurisdiction"
                     value={formData.jurisdiction}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                    className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
                     placeholder="e.g. United Kingdom, EU, Global"
                   />
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                  <p className="text-xs text-foreground opacity-50 mt-1">
                     Enter multiple countries separated by commas if applicable.
                   </p>
                 </div>
 
                 {/* Location of Work / Asset */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  <label className="text-sm font-medium text-foreground opacity-90">
                     Location of Work / Asset
                     <span className="text-xs text-zinc-400 font-normal ml-2">(Optional)</span>
                   </label>
@@ -691,7 +710,7 @@ export default function ClientProblemRequestForm() {
                     name="location"
                     value={formData.location}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                    className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
                     placeholder="Provide the location of the business, project, land..."
                   />
                 </div>
@@ -702,17 +721,17 @@ export default function ClientProblemRequestForm() {
         </div>
 
         {/* --- DOCUMENTS SECTION --- */}
-        <div className="pt-6 border-t border-zinc-200 dark:border-zinc-800">
-          <h3 className="text-lg font-semibold text-zinc-900 dark:text-white mb-4">Documents & Vault</h3>
+        <div className="pt-6 border-t border-secondary">
+          <h3 className="text-lg font-semibold text-foreground mb-4">Documents & Vault</h3>
 
           <div className="space-y-6">
             {/* Documents Available Toggle */}
-            <div className="flex items-start justify-between p-4 border border-zinc-200 dark:border-zinc-800 rounded-xl bg-zinc-50 dark:bg-zinc-800/30">
+            <div className="flex items-start justify-between p-4 border border-secondary rounded-xl bg-zinc-50 dark:bg-zinc-800/30">
               <div className="space-y-1 pr-4">
-                <label className="text-sm font-medium text-zinc-900 dark:text-white">
+                <label className="text-sm font-medium text-foreground">
                   Do you have documents available?
                 </label>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                <p className="text-xs text-foreground opacity-50">
                   Photos, screenshots, contracts, reports, or permits that may help ORR assess this request.
                 </p>
               </div>
@@ -728,7 +747,7 @@ export default function ClientProblemRequestForm() {
                     <div className={`block w-10 h-6 rounded-full transition-colors ${formData.hasDocuments ? 'bg-blue-600' : 'bg-zinc-300 dark:bg-zinc-600'}`}></div>
                     <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${formData.hasDocuments ? 'transform translate-x-4' : ''}`}></div>
                   </div>
-                  <span className="ml-3 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  <span className="ml-3 text-sm font-medium text-foreground opacity-90">
                     {formData.hasDocuments ? "Yes" : "No"}
                   </span>
                 </label>
@@ -742,14 +761,14 @@ export default function ClientProblemRequestForm() {
                 animate={{ opacity: 1, height: "auto" }}
                 className="space-y-4"
               >
-                <div className="border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-xl p-6 text-center bg-white dark:bg-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+                <div className="border-2 border-dashed border-secondary rounded-xl p-6 text-center bg-card/50 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
                   <div className="mx-auto w-12 h-12 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center mb-3">
                     <Paperclip className="w-6 h-6" />
                   </div>
-                  <p className="text-sm font-medium text-zinc-900 dark:text-white mb-1">
+                  <p className="text-sm font-medium text-foreground mb-1">
                     Upload documents relevant to this request
                   </p>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-4">
+                  <p className="text-xs text-foreground opacity-50 mb-4">
                     Files will be securely stored in your Client Vault and linked to this Request ID.
                   </p>
                   <label className="cursor-pointer inline-flex items-center px-4 py-2 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-sm font-medium rounded-lg hover:opacity-90 transition-opacity">
@@ -766,12 +785,12 @@ export default function ClientProblemRequestForm() {
                 {/* Uploaded Documents List */}
                 {formData.documents.length > 0 && (
                   <div className="space-y-3 mt-4">
-                    <h4 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Attached Files</h4>
+                    <h4 className="text-sm font-medium text-foreground opacity-90">Attached Files</h4>
                     {formData.documents.map((doc, index) => (
-                      <div key={index} className="flex flex-col sm:flex-row gap-3 p-3 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl items-start sm:items-center">
+                      <div key={index} className="flex flex-col sm:flex-row gap-3 p-3 bg-card border border-zinc-200 dark:border-zinc-700 rounded-xl items-start sm:items-center">
                         <div className="flex-1 flex items-center gap-3 overflow-hidden">
                           <FileText className="w-5 h-5 text-blue-500 shrink-0" />
-                          <span className="text-sm text-zinc-700 dark:text-zinc-300 truncate font-medium">
+                          <span className="text-sm text-foreground opacity-90 truncate font-medium">
                             {doc.file.name}
                           </span>
                         </div>
@@ -781,8 +800,7 @@ export default function ClientProblemRequestForm() {
                             placeholder="Briefly describe this document..."
                             value={doc.description}
                             onChange={(e) => handleDocDescriptionChange(index, e.target.value)}
-                            className="w-full text-sm px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                            required
+                            className="w-full text-sm px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-900 text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                           />
                         </div>
                         <button
@@ -802,19 +820,19 @@ export default function ClientProblemRequestForm() {
         </div>
 
         {/* --- COMMUNICATION SECTION --- */}
-        <div className="pt-6 border-t border-zinc-200 dark:border-zinc-800">
-          <h3 className="text-lg font-semibold text-zinc-900 dark:text-white mb-4">Communication</h3>
+        <div className="pt-6 border-t border-secondary">
+          <h3 className="text-lg font-semibold text-foreground mb-4">Communication</h3>
           
           <div className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Preferred Contact Method */}
               <div className="space-y-3">
-                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <label className="text-sm font-medium text-foreground opacity-90">
                   How would you prefer ORR to contact you about this request?
                   <span className="text-xs text-zinc-400 font-normal ml-2">(Select all that apply)</span>
                 </label>
-                <div className="space-y-2 p-3 border border-zinc-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-800/50">
-                  {["Portal message", "Email", "Phone", "Video meeting", "WhatsApp"].map((opt) => (
+                <div className="space-y-2 p-3 border border-secondary rounded-xl bg-card/50">
+                  {CONTACT_METHOD_OPTIONS.map((opt) => (
                     <label key={opt} className="flex items-center gap-3 cursor-pointer p-1">
                       <input 
                         type="checkbox" 
@@ -822,7 +840,7 @@ export default function ClientProblemRequestForm() {
                         onChange={() => handleCheckboxChange("preferredContactMethod", opt)}
                         className="w-4 h-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
                       />
-                      <span className="text-sm text-zinc-700 dark:text-zinc-300">{opt}</span>
+                      <span className="text-sm text-foreground opacity-90">{opt}</span>
                     </label>
                   ))}
                 </div>
@@ -830,12 +848,12 @@ export default function ClientProblemRequestForm() {
 
               {/* Preferred Meeting Language */}
               <div className="space-y-3">
-                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <label className="text-sm font-medium text-foreground opacity-90">
                   Which language should be used for meetings or written communication?
                   <span className="text-xs text-zinc-400 font-normal ml-2">(Select all that apply)</span>
                 </label>
-                <div className="space-y-2 p-3 border border-zinc-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-800/50">
-                  {["English", "Maltese", "Italian", "French", "Spanish", "Other"].map((opt) => (
+                <div className="space-y-2 p-3 border border-secondary rounded-xl bg-card/50">
+                  {LANGUAGE_OPTIONS.map((opt) => (
                     <label key={opt} className="flex items-center gap-3 cursor-pointer p-1">
                       <input 
                         type="checkbox" 
@@ -843,7 +861,7 @@ export default function ClientProblemRequestForm() {
                         onChange={() => handleCheckboxChange("preferredMeetingLanguage", opt)}
                         className="w-4 h-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
                       />
-                      <span className="text-sm text-zinc-700 dark:text-zinc-300">{opt}</span>
+                      <span className="text-sm text-foreground opacity-90">{opt}</span>
                     </label>
                   ))}
                 </div>
@@ -852,7 +870,7 @@ export default function ClientProblemRequestForm() {
 
             {/* Preferred Next Step */}
             <div className="space-y-2 max-w-md">
-              <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <label className="text-sm font-medium text-foreground opacity-90">
                 What would you prefer as the next step?
                 <span className="text-xs text-zinc-400 font-normal ml-2">(Recommended)</span>
               </label>
@@ -860,28 +878,26 @@ export default function ClientProblemRequestForm() {
                 name="preferredNextStep"
                 value={formData.preferredNextStep}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all appearance-none"
+                className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all appearance-none"
               >
                 <option value="" disabled>Select preferred next step...</option>
-                <option value="Schedule a first consultation">Schedule a first consultation</option>
-                <option value="Receive initial feedback from ORR">Receive initial feedback from ORR</option>
-                <option value="Upload documents first">Upload documents first</option>
-                <option value="Discuss pricing">Discuss pricing</option>
-                <option value="I am not sure">I am not sure</option>
+                {NEXT_STEP_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
               </select>
             </div>
           </div>
         </div>
 
         {/* --- CONFIDENTIALITY SECTION --- */}
-        <div className="pt-6 border-t border-zinc-200 dark:border-zinc-800">
-          <h3 className="text-lg font-semibold text-zinc-900 dark:text-white mb-4">Confidentiality</h3>
+        <div className="pt-6 border-t border-secondary">
+          <h3 className="text-lg font-semibold text-foreground mb-4">Confidentiality</h3>
           
           <div className="space-y-6">
             <div className="grid grid-cols-1 gap-6">
               {/* Sensitivity Level */}
               <div className="space-y-2 max-w-md">
-                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <label className="text-sm font-medium text-foreground opacity-90">
                   How sensitive is this request?
                 </label>
                 <select 
@@ -889,18 +905,17 @@ export default function ClientProblemRequestForm() {
                   required
                   value={formData.sensitivityLevel}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all appearance-none"
+                  className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all appearance-none"
                 >
                   <option value="" disabled>Select sensitivity level...</option>
-                  <option value="Standard">Standard</option>
-                  <option value="Confidential">Confidential</option>
-                  <option value="Highly Confidential">Highly Confidential</option>
-                  <option value="Restricted / commercially sensitive">Restricted / commercially sensitive</option>
+                  {SENSITIVITY_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
                 </select>
               </div>
 
               {/* Sensitive Information Notice */}
-              <label className="flex items-start gap-3 cursor-pointer p-4 border border-zinc-200 dark:border-zinc-800 rounded-xl bg-zinc-50 dark:bg-zinc-800/30">
+              <label className="flex items-start gap-3 cursor-pointer p-4 border border-secondary rounded-xl bg-zinc-50 dark:bg-zinc-800/30">
                 <div className="pt-0.5">
                   <input 
                     type="checkbox" 
@@ -911,11 +926,11 @@ export default function ClientProblemRequestForm() {
                   />
                 </div>
                 <div className="flex-1">
-                  <span className="text-sm font-medium text-zinc-900 dark:text-white">
+                  <span className="text-sm font-medium text-foreground">
                     Sensitive Information Notice
                   </span>
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1 leading-relaxed">
-                    I understand that ORR will review this request internally and may assign authorised ORR personnel to assess it according to ORR’s confidentiality procedures.
+                  <p className="text-sm text-foreground opacity-60 mt-1 leading-relaxed">
+                    I understand that ORR will review this request internally and may assign authorised ORR personnel to assess it according to ORR&apos;s confidentiality procedures.
                   </p>
                 </div>
               </label>
@@ -924,12 +939,12 @@ export default function ClientProblemRequestForm() {
         </div>
 
         {/* --- COMPLIANCE / DECLARATION SECTION --- */}
-        <div className="pt-6 border-t border-zinc-200 dark:border-zinc-800">
-          <h3 className="text-lg font-semibold text-zinc-900 dark:text-white mb-4">Compliance / Declaration</h3>
+        <div className="pt-6 border-t border-secondary">
+          <h3 className="text-lg font-semibold text-foreground mb-4">Compliance / Declaration</h3>
           
           <div className="space-y-4">
             {/* Accuracy Confirmation */}
-            <label className="flex items-start gap-3 cursor-pointer p-4 border border-zinc-200 dark:border-zinc-800 rounded-xl bg-zinc-50 dark:bg-zinc-800/30">
+            <label className="flex items-start gap-3 cursor-pointer p-4 border border-secondary rounded-xl bg-zinc-50 dark:bg-zinc-800/30">
               <div className="pt-0.5">
                 <input 
                   type="checkbox" 
@@ -940,17 +955,17 @@ export default function ClientProblemRequestForm() {
                 />
               </div>
               <div className="flex-1">
-                <span className="text-sm font-medium text-zinc-900 dark:text-white">
+                <span className="text-sm font-medium text-foreground">
                   Accuracy Confirmation <span className="text-red-500">*</span>
                 </span>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1 leading-relaxed">
+                <p className="text-sm text-foreground opacity-60 mt-1 leading-relaxed">
                   I confirm that the information provided is accurate to the best of my knowledge.
                 </p>
               </div>
             </label>
 
             {/* Authority to Submit */}
-            <label className="flex items-start gap-3 cursor-pointer p-4 border border-zinc-200 dark:border-zinc-800 rounded-xl bg-zinc-50 dark:bg-zinc-800/30">
+            <label className="flex items-start gap-3 cursor-pointer p-4 border border-secondary rounded-xl bg-zinc-50 dark:bg-zinc-800/30">
               <div className="pt-0.5">
                 <input 
                   type="checkbox" 
@@ -960,17 +975,17 @@ export default function ClientProblemRequestForm() {
                 />
               </div>
               <div className="flex-1">
-                <span className="text-sm font-medium text-zinc-900 dark:text-white">
+                <span className="text-sm font-medium text-foreground">
                   Authority to Submit <span className="text-xs text-zinc-400 font-normal ml-2">(Recommended)</span>
                 </span>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1 leading-relaxed">
+                <p className="text-sm text-foreground opacity-60 mt-1 leading-relaxed">
                   I confirm that I am authorised to submit this request on behalf of the client or business profile.
                 </p>
               </div>
             </label>
 
             {/* No Emergency Reliance */}
-            <label className="flex items-start gap-3 cursor-pointer p-4 border border-zinc-200 dark:border-zinc-800 rounded-xl bg-zinc-50 dark:bg-zinc-800/30">
+            <label className="flex items-start gap-3 cursor-pointer p-4 border border-secondary rounded-xl bg-zinc-50 dark:bg-zinc-800/30">
               <div className="pt-0.5">
                 <input 
                   type="checkbox" 
@@ -980,17 +995,17 @@ export default function ClientProblemRequestForm() {
                 />
               </div>
               <div className="flex-1">
-                <span className="text-sm font-medium text-zinc-900 dark:text-white">
+                <span className="text-sm font-medium text-foreground">
                   No Emergency Reliance <span className="text-xs text-zinc-400 font-normal ml-2">(Recommended)</span>
                 </span>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1 leading-relaxed">
+                <p className="text-sm text-foreground opacity-60 mt-1 leading-relaxed">
                   I understand that this submission does not create an emergency support obligation and that ORR will confirm the next step after review.
                 </p>
               </div>
             </label>
 
             {/* AI Processing Notice */}
-            <label className="flex items-start gap-3 cursor-pointer p-4 border border-zinc-200 dark:border-zinc-800 rounded-xl bg-zinc-50 dark:bg-zinc-800/30">
+            <label className="flex items-start gap-3 cursor-pointer p-4 border border-secondary rounded-xl bg-zinc-50 dark:bg-zinc-800/30">
               <div className="pt-0.5">
                 <input 
                   type="checkbox" 
@@ -1000,10 +1015,10 @@ export default function ClientProblemRequestForm() {
                 />
               </div>
               <div className="flex-1">
-                <span className="text-sm font-medium text-zinc-900 dark:text-white">
+                <span className="text-sm font-medium text-foreground">
                   AI Processing Notice <span className="text-xs text-zinc-400 font-normal ml-2">(Recommended)</span>
                 </span>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1 leading-relaxed">
+                <p className="text-sm text-foreground opacity-60 mt-1 leading-relaxed">
                   I understand that ORR may use secure internal AI-assisted tools to organise, summarise, and classify this request for review by ORR personnel.
                 </p>
               </div>
@@ -1022,7 +1037,8 @@ export default function ClientProblemRequestForm() {
                 : "border-zinc-300 text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
               }`}
           >
-            Save Draft
+            <Save className="w-5 h-5" />
+            {isSubmitting ? "Saving..." : "Save Draft"}
           </button>
 
           <button

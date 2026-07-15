@@ -23,5 +23,23 @@ export const adminVaultApi = {
       data = data.data;
     }
     return Array.isArray(data) ? data : [];
+  },
+
+  askAIAssistant: async (message: string, context?: string, history?: any[]) => {
+    const response = await axiosInstance.post('/admin-portal/v1/ai/chat/', {
+        message,
+        context,
+        conversation_history: history || [],
+    });
+    return response.data?.reply || response.data?.data?.reply || 'No response from AI.';
+  },
+  
+  summarizeDocument: async (text: string, title?: string, documentId?: string) => {
+    const response = await axiosInstance.post('/admin-portal/v1/ai/document-summary/', {
+        text,
+        title: title || 'Untitled',
+        document_id: documentId,
+    });
+    return response.data?.summary || response.data?.data?.summary || 'No summary generated.';
   }
 };

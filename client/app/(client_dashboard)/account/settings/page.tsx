@@ -27,13 +27,24 @@ export default function AccountSettingsPage() {
   const fetchCountries = async () => {
     try {
       const response = await fetch('https://restcountries.com/v3.1/all?fields=name,cca2');
+      if (!response.ok) throw new Error('API down');
       const data = await response.json();
       const sortedCountries = data.sort((a: Country, b: Country) => 
         a.name.common.localeCompare(b.name.common)
       );
       setCountries(sortedCountries);
     } catch (error) {
-      console.error('Failed to fetch countries:', error);
+      console.warn('Using fallback country list due to fetch error:', error);
+      setCountries([
+        { name: { common: 'United States' }, cca2: 'US' },
+        { name: { common: 'United Kingdom' }, cca2: 'GB' },
+        { name: { common: 'Canada' }, cca2: 'CA' },
+        { name: { common: 'Australia' }, cca2: 'AU' },
+        { name: { common: 'Germany' }, cca2: 'DE' },
+        { name: { common: 'France' }, cca2: 'FR' },
+        { name: { common: 'Japan' }, cca2: 'JP' },
+        { name: { common: 'India' }, cca2: 'IN' },
+      ].sort((a, b) => a.name.common.localeCompare(b.name.common)));
     } finally {
       setLoadingCountries(false);
     }

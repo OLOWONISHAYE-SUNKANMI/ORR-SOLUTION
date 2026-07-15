@@ -5,17 +5,17 @@ import ClientProblemRequestForm from "@/app/components/forms/ClientProblemReques
 
 export default function ProblemRequestPage() {
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 p-6 lg:p-12">
+    <main className="min-h-full p-4 md:p-6 bg-background">
       <div className="max-w-4xl mx-auto mb-8">
-        <h1 className="text-3xl lg:text-4xl font-bold text-zinc-900 dark:text-white mb-4">
+        <h1 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
           Submit a Problem Request
         </h1>
-        <p className="text-lg text-zinc-600 dark:text-zinc-400">
+        <p className="text-lg text-foreground opacity-60">
           This is the starting point of your project lifecycle. The information provided here will securely be routed to our Admin and Project Management teams for review and resource allocation.
         </p>
       </div>
 
       <ClientProblemRequestForm />
-    </div>
+    </main>
   );
 }
