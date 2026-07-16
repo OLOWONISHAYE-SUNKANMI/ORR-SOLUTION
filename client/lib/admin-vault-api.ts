@@ -1,5 +1,5 @@
 import axiosInstance from './axios';
-import { VaultDocument } from './vault-api';
+import { VaultDocument, normalizeDocType } from './vault-api';
 
 export interface Client {
   id: number;
@@ -23,6 +23,26 @@ export const adminVaultApi = {
       data = data.data;
     }
     return Array.isArray(data) ? data : [];
+  },
+
+  getDocument: async (id: string): Promise<VaultDocument> => {
+    const response = await axiosInstance.get(`/admin-portal/v1/vault/documents/${id}/`);
+    const d = response.data.data || response.data;
+    let formattedDate = 'Unknown Date';
+    try {
+      const rawDate = d.updated_at || d.created_at;
+      if (rawDate) {
+        formattedDate = new Date(rawDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+      }
+    } catch (e) {}
+
+    return {
+      ...d,
+      name: d.title || d.name || 'Untitled',
+      lastModified: formattedDate,
+      size: d.file_size || '0 KB',
+      type: normalizeDocType(d),
+    };
   },
 
   askAIAssistant: async (message: string, context?: string, history?: any[]) => {
