@@ -74,11 +74,47 @@ export default function PreMeetingPage() {
           </div>
         </div>
 
+        {/* AI Meeting Prep Section */}
+        <div className="mt-8 pt-8 border-t border-secondary">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                <span className="text-xl">✨</span> AI Meeting Prep
+              </h2>
+              <p className="text-sm text-foreground opacity-70">
+                Let Gemini AI generate suggested talking points and goals based on your project history.
+              </p>
+            </div>
+            <button
+              onClick={async () => {
+                try {
+                  const { default: api } = await import('@/lib/axios');
+                  addToast("Generating AI suggestions...", "success");
+                  const response = await api.post('/ai/meeting-prep/', { meeting_id: meetingId });
+                  if (response.data) {
+                    setFormData({
+                      basic_context: response.data.summary || formData.basic_context,
+                      goals: (response.data.recommendations || []).join('\n') || formData.goals,
+                      pain_points: (response.data.talking_points || []).join('\n') || formData.pain_points,
+                    });
+                    addToast("AI suggestions applied successfully", "success");
+                  }
+                } catch (error) {
+                  addToast("Failed to generate AI suggestions", "error");
+                }
+              }}
+              className="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/20 px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2"
+            >
+              Generate with AI
+            </button>
+          </div>
+        </div>
+
         {/* Save button */}
         <button 
           onClick={handleSubmit}
           disabled={isLoading}
-          className="mt-10 bg-primary hover:bg-opacity-90 text-background font-semibold px-6 py-3 rounded-lg transition-all disabled:opacity-50"
+          className="mt-6 w-full bg-primary hover:bg-opacity-90 text-background font-semibold px-6 py-4 rounded-xl transition-all disabled:opacity-50 text-lg"
         >
           {isLoading ? interpolate(t.dashboard.account.settings.saving) : interpolate(t.dashboard.common.save)}
         </button>

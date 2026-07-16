@@ -430,18 +430,27 @@ export default function DocumentViewerClient({ id }: { id: string }) {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleSendMessage = () => {
-    if (!input.trim() || !document) return;
-    const newMessages = [...messages, { role: 'user', content: input }];
+  const handleSendMessage = async () => {
+    if (!input.trim() || aiLoading || !document) return;
+    const userMsg = input.trim();
+    const newMessages = [...messages, { role: 'user', content: userMsg }];
     setMessages(newMessages);
     setInput('');
     setAiLoading(true);
 
-    // Simulate AI response
-    setTimeout(() => {
-      setMessages([...newMessages, { role: 'ai', content: `Based on the document "${document.name}", I can see it was last modified on ${new Date(document.lastModified).toLocaleString()}. Should I provide a detailed executive summary?` }]);
+    try {
+      const history = messages.map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.content }));
+      const context = `The user is viewing a document titled "${document.name}". Type: ${normalizedType}.`;
+      
+      const { adminVaultApi } = await import('@/lib/admin-vault-api');
+      const reply = await adminVaultApi.askAIAssistant(userMsg, context, history);
+      setMessages([...newMessages, { role: 'ai', content: reply }]);
+    } catch (err) {
+      console.error(err);
+      setMessages([...newMessages, { role: 'ai', content: 'Sorry, I encountered an error communicating with the AI service.' }]);
+    } finally {
       setAiLoading(false);
-    }, 2000);
+    }
   };
 
   const handleRequestAccess = () => {

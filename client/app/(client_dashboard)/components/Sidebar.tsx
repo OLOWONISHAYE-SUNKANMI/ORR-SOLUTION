@@ -117,6 +117,16 @@ export default function Sidebar() {
               onClick={() => toggle("home")}
               items={[
                 { label: interpolate(t.dashboard.sidebar.items.dashboard), href: "/dashboard" },
+                { label: "AI Assistant", href: "/ai-assistant" },
+                { 
+                  label: "Expert Requests", 
+                  href: "/problem-request",
+                  hasSub: true,
+                  subItems: [
+                    { label: "New Request", href: "/problem-request" },
+                    { label: "My Requests", href: "/problem-request/history" }
+                  ]
+                },
                 { label: interpolate(t.dashboard.sidebar.items.analytics), href: "/analytics" }
               ]}
               pathname={pathname}

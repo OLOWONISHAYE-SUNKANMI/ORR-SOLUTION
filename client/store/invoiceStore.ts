@@ -59,66 +59,7 @@ interface InvoiceState {
   generateInvoiceNumber: () => string;
 }
 
-// Mock Data
-const MOCK_INVOICES: Invoice[] = [
-  {
-    id: 'inv_1',
-    invoiceNumber: 'ORR-2026-0001',
-    clientId: 'client_1',
-    clientName: 'Acme Corp',
-    clientEmail: 'billing@acme.com',
-    status: 'paid',
-    issueDate: '2026-04-01',
-    dueDate: '2026-04-15',
-    lineItems: [
-      { id: 'li_1', description: 'Operational Consulting - Phase 1', quantity: 1, unitPrice: 1500, amount: 1500 },
-      { id: 'li_2', description: 'System Audit', quantity: 1, unitPrice: 500, amount: 500 },
-    ],
-    subtotal: 2000,
-    taxRate: 0.1,
-    taxAmount: 200,
-    totalAmount: 2200,
-    currency: 'USD',
-    paymentDate: '2026-04-10',
-    receiptNumber: 'RCP-2026-0001'
-  },
-  {
-    id: 'inv_2',
-    invoiceNumber: 'ORR-2026-0002',
-    clientId: 'client_1',
-    clientName: 'Acme Corp',
-    clientEmail: 'billing@acme.com',
-    status: 'issued',
-    issueDate: '2026-04-15',
-    dueDate: '2026-04-30',
-    lineItems: [
-      { id: 'li_3', description: 'Monthly Maintenance', quantity: 1, unitPrice: 500, amount: 500 },
-    ],
-    subtotal: 500,
-    taxRate: 0.1,
-    taxAmount: 50,
-    totalAmount: 550,
-    currency: 'USD',
-  },
-  {
-    id: 'inv_3',
-    invoiceNumber: 'ORR-2026-0003',
-    clientId: 'client_2',
-    clientName: 'Global Systems',
-    clientEmail: 'finance@globalsystems.com',
-    status: 'overdue',
-    issueDate: '2026-03-01',
-    dueDate: '2026-03-15',
-    lineItems: [
-      { id: 'li_4', description: 'Risk Assessment', quantity: 1, unitPrice: 2500, amount: 2500 },
-    ],
-    subtotal: 2500,
-    taxRate: 0.1,
-    taxAmount: 250,
-    totalAmount: 2750,
-    currency: 'USD',
-  }
-];
+// Mock Data Removed
 
 const DEFAULT_SETTINGS: InvoiceSettings = {
   prefix: 'ORR-2026-',
@@ -132,18 +73,48 @@ const DEFAULT_SETTINGS: InvoiceSettings = {
 };
 
 export const useInvoiceStore = create<InvoiceState>()((set, get) => ({
-  invoices: MOCK_INVOICES,
+  invoices: [],
   settings: DEFAULT_SETTINGS,
   isLoading: false,
   selectedInvoice: null,
 
   fetchInvoices: async () => {
     set({ isLoading: true });
-    // In real app: const response = await api.get('/invoices/');
-    // For now, use mock
-    setTimeout(() => {
-      set({ invoices: MOCK_INVOICES, isLoading: false });
-    }, 500);
+    try {
+      const response = await api.get('/payment/v1/billing-history/');
+      // Map backend invoice schema to frontend invoice schema
+      const mappedInvoices: Invoice[] = response.data.map((inv: any) => ({
+        id: inv.id.toString(),
+        invoiceNumber: inv.reference_id || `INV-${inv.id}`,
+        clientId: inv.client_email || 'unknown',
+        clientName: inv.client_name || '',
+        clientEmail: inv.client_email || '',
+        status: inv.status.toLowerCase() === 'paid' ? 'paid' : 'pending',
+        issueDate: inv.transaction_date || new Date().toISOString().split('T')[0],
+        dueDate: inv.transaction_date || new Date().toISOString().split('T')[0],
+        lineItems: [
+          {
+            id: '1',
+            description: inv.billing_title || inv.plan || 'Service',
+            quantity: 1,
+            unitPrice: inv.amount,
+            amount: inv.amount
+          }
+        ],
+        subtotal: inv.amount,
+        taxRate: 0,
+        taxAmount: 0,
+        totalAmount: inv.amount,
+        currency: inv.currency || 'USD',
+        paymentDate: inv.status.toLowerCase() === 'paid' ? inv.transaction_date : undefined,
+        receiptNumber: inv.reference_id
+      }));
+      set({ invoices: mappedInvoices, isLoading: false });
+    } catch (error) {
+      console.error('Error fetching invoices:', error);
+      set({ isLoading: false });
+      useToastStore.getState().addToast('Failed to load invoices', 'error');
+    }
   },
 
   fetchInvoiceById: async (id: string) => {
