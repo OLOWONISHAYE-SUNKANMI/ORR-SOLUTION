@@ -1,19 +1,16 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { LanguageProvider } from "@/lib/i18n/LanguageContext";
 import { ToastContainer } from "./components/Toast";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+const geistSans = {
+  variable: "",
+};
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const geistMono = {
+  variable: "",
+};
 
 const siteURL = process.env.NEXT_PUBLIC_SITE_URL || 'https://orr.solutions/';
 

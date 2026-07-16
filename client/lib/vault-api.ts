@@ -38,7 +38,7 @@ export interface ActivityLogEntry {
   model: string;
 }
 
-function normalizeDocType(d: any): string {
+export function normalizeDocType(d: any): string {
   // Prefer document_source for Google docs/sheets/slides
   const src = d.document_source || '';
   if (src === 'google_sheet') return 'sheet';
@@ -216,5 +216,14 @@ export const vaultApi = {
     const data = response.data.data || response.data;
     if (!Array.isArray(data)) return [];
     return data;
+  },
+
+  askAIAssistant: async (message: string, context?: string, history?: any[]): Promise<string> => {
+    const response = await axiosInstance.post('/ai/chat/', {
+      message,
+      context,
+      conversation_history: history || [],
+    });
+    return response.data?.reply || response.data?.data?.reply || 'No response from AI.';
   },
 };

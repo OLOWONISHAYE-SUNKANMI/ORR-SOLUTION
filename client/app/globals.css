@@ -1,6 +1,8 @@
 @import "tailwindcss";
 
 :root {
+  --font-geist-sans: Inter, system-ui, -apple-system, sans-serif;
+  --font-geist-mono: monospace;
   /* Default = dark navy (the app's primary design) */
   --color-background: #0d223c;
   --color-foreground: #ffffff;
