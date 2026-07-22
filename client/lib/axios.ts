@@ -2,7 +2,7 @@ import axios from "axios";
 
 const api = axios.create({
   baseURL: `${process.env.NEXT_PUBLIC_API_URL || 'https://orr-backend-105825824472.asia-southeast2.run.app'}`,
-  timeout: 30000,
+  timeout: 60000,
   headers: {
     "Content-Type": "application/json",
   },
