@@ -12,6 +12,7 @@ import {
   MessageSquare,
   CheckCircle,
 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useLanguage, interpolate } from "@/lib/i18n/LanguageContext";
 import api from "@/lib/axios";
 
@@ -54,6 +55,8 @@ interface Chat {
 }
 
 export default function MessagesPage() {
+  const searchParams = useSearchParams();
+  const requestedTicketId = searchParams?.get('ticketId');
   const { t, language: currentLang } = useLanguage();
   const [chats, setChats] = useState<Chat[]>([]);
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
@@ -179,8 +182,15 @@ export default function MessagesPage() {
 
         setChats(ticketChats);
         if (ticketChats.length > 0 && !selectedChat) {
-          setSelectedChat(ticketChats[0]);
-          fetchMessages(ticketChats[0].id);
+          let chatToSelect = ticketChats[0];
+          if (requestedTicketId) {
+            const foundChat = ticketChats.find(c => String(c.id) === requestedTicketId || c.ticket?.ticket_id === requestedTicketId);
+            if (foundChat) {
+              chatToSelect = foundChat;
+            }
+          }
+          setSelectedChat(chatToSelect);
+          fetchMessages(chatToSelect.id);
         }
       } else {
         console.error(
@@ -212,19 +222,7 @@ export default function MessagesPage() {
         return;
       }
 
-      // Try the admin portal endpoint first
-      let response;
-      try {
-        response = await api.get(`/admin-portal/v1/tickets/${ticketId}/messages/`);
-      } catch (adminError: any) {
-        if (adminError.response?.status === 404) {
-          // If admin portal fails, try the client endpoint
-          console.log("Admin endpoint 404, trying client endpoint...");
-          response = await api.get(`/tickets/${ticketId}/messages/`);
-        } else {
-          throw adminError;
-        }
-      }
+      const response = await api.get(`/tickets/${ticketId}/messages/`);
 
       if (response && response.status === 200) {
         const result = response.data;
@@ -252,44 +250,6 @@ export default function MessagesPage() {
           response.status,
           response.statusText,
         );
-        // If admin portal fails, try the client endpoint
-        if (response.status === 404) {
-          const token = localStorage.getItem("accessToken");
-          const clientResponse = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL || 'https://orr-backend-105825824472.asia-southeast2.run.app'}/tickets/${ticketId}/messages/`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-            },
-          );
-
-          if (clientResponse.ok) {
-            const clientResult = await clientResponse.json();
-            let clientMessages: TicketMessage[] = [];
-            if (Array.isArray(clientResult)) {
-              clientMessages = clientResult;
-            } else if (clientResult && Array.isArray(clientResult.data)) {
-              clientMessages = clientResult.data;
-            } else if (
-              clientResult &&
-              clientResult.data &&
-              typeof clientResult.data === "object"
-            ) {
-              clientMessages = (Object.values(clientResult.data) as TicketMessage[]).filter(
-                (item) => item && item.id,
-              );
-            }
-
-            setMessages(clientMessages);
-          } else {
-            console.error(
-              "Failed to fetch messages from client endpoint:",
-              clientResponse.status,
-            );
-          }
-        }
       }
     } catch (error) {
       console.error("Failed to fetch messages:", error);

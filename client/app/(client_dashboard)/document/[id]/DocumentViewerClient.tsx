@@ -154,7 +154,7 @@ export default function DocumentViewerClient({ id }: { id: string }) {
   const handleSaveSandbox = async () => {
     setIsSaving(true);
     try {
-      const apiBase = process.env.NEXT_PUBLIC_API_URL || 'https://orr-backend-105825824472.asia-southeast2.run.app';
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
       const token = localStorage.getItem('access_token') || localStorage.getItem('token');
       const headers: HeadersInit = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -480,7 +480,7 @@ export default function DocumentViewerClient({ id }: { id: string }) {
     let link = doc.link;
  
     // Ensure absolute URL for local files
-    const apiBase = process.env.NEXT_PUBLIC_API_URL || 'https://orr-backend-105825824472.asia-southeast2.run.app';
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
     if (link && !link.startsWith('http')) {
       link = `${apiBase}${link}`;
     }

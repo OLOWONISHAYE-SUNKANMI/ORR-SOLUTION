@@ -236,6 +236,7 @@ export const useAuthStore = create<AuthState>()(
         try {
           const response = await api.post("/api/auth/google-login/", {
             credential,
+            portal: "client"
           });
 
           if (response.status === 200 || response.status === 201) {

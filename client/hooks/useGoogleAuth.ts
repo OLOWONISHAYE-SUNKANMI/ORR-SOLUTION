@@ -35,24 +35,28 @@ export function useGoogleAuth() {
     }
 
     const initializeGoogle = () => {
-      if (typeof window !== 'undefined' && window.google) {
-        window.google.accounts.id.initialize({
+      if (typeof window !== 'undefined' && (window as any).google) {
+        // Cancel any pending UI to prevent FedCM AbortError in React StrictMode
+        (window as any).google.accounts.id.cancel();
+        
+        (window as any).google.accounts.id.initialize({
           client_id: clientId,
           callback: handleCredentialResponse,
           ux_mode: 'popup',
           // @ts-ignore - disable FedCM which causes AbortError in newer Chrome
           use_fedcm_for_prompt: false,
+          auto_select: false,
         });
       }
     };
 
     // If script already loaded
-    if (typeof window !== 'undefined' && window.google) {
+    if (typeof window !== 'undefined' && (window as any).google) {
       initializeGoogle();
     } else {
       // Wait for script to load (added in layout.tsx)
       const interval = setInterval(() => {
-        if (typeof window !== 'undefined' && window.google) {
+        if (typeof window !== 'undefined' && (window as any).google) {
           initializeGoogle();
           clearInterval(interval);
         }
@@ -64,8 +68,8 @@ export function useGoogleAuth() {
   // Render Google's native hidden button as a reliable fallback
   const renderGoogleButton = useCallback((container: HTMLDivElement | null) => {
     googleButtonRef.current = container;
-    if (container && typeof window !== 'undefined' && window.google) {
-      window.google.accounts.id.renderButton(container, {
+    if (container && typeof window !== 'undefined' && (window as any).google) {
+      (window as any).google.accounts.id.renderButton(container, {
         type: 'standard',
         theme: 'outline',
         size: 'large',
@@ -77,7 +81,7 @@ export function useGoogleAuth() {
   }, []);
 
   const signInWithGoogle = () => {
-    if (typeof window !== 'undefined' && window.google) {
+    if (typeof window !== 'undefined' && (window as any).google) {
       // Try to click Google's rendered button (most reliable approach)
       if (googleButtonRef.current) {
         const iframe = googleButtonRef.current.querySelector('iframe');
@@ -88,7 +92,7 @@ export function useGoogleAuth() {
         }
       }
       // Fallback to prompt()
-      window.google.accounts.id.prompt((notification: any) => {
+      (window as any).google.accounts.id.prompt((notification: any) => {
         if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
           console.log('Google One Tap not available, reason:', notification.getNotDisplayedReason?.() || notification.getSkippedReason?.());
           // If prompt fails, try opening Google's OAuth consent screen directly

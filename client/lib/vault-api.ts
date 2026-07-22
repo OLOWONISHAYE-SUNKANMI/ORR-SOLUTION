@@ -211,6 +211,18 @@ export const vaultApi = {
     return response.data.data || response.data;
   },
 
+  updateFolder: async (id: string, name: string): Promise<any> => {
+    vaultApi.clearCache();
+    const response = await axiosInstance.patch(`/vault/folders/${id}/`, { name });
+    return response.data.data || response.data;
+  },
+
+  deleteFolder: async (id: string): Promise<any> => {
+    vaultApi.clearCache();
+    const response = await axiosInstance.delete(`/vault/folders/${id}/`);
+    return response.data;
+  },
+
   getActivity: async (): Promise<ActivityLogEntry[]> => {
     const response = await axiosInstance.get('/vault/activity/');
     const data = response.data.data || response.data;

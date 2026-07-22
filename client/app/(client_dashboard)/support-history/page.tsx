@@ -171,10 +171,18 @@ export default function SupportHistory() {
                           {/* Messages */}
                           {messages.length > 0 && (
                             <div className="mb-4">
-                              <h4 className="font-semibold mb-3 flex items-center gap-2">
-                                <MessageSquare size={16} />
-                                {interpolate(t.dashboard.support.conversation)}
-                              </h4>
+                              <div className="flex items-center justify-between mb-3">
+                                <h4 className="font-semibold flex items-center gap-2">
+                                  <MessageSquare size={16} />
+                                  {interpolate(t.dashboard.support.conversation)}
+                                </h4>
+                                <a 
+                                  href={`/messages?ticketId=${ticketId}`}
+                                  className="text-xs bg-lemon/20 text-lemon px-3 py-1 rounded-full hover:bg-lemon/30 transition-colors"
+                                >
+                                  Open in Live Chat
+                                </a>
+                              </div>
                               <div className="space-y-3 max-h-60 overflow-y-auto">
                                 {messages.map((message) => (
                                   <div key={message.id} className="bg-background/10 rounded-lg p-3">
