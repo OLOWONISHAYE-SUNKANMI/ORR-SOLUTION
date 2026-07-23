@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
+import { useOnboardingStore } from '@/store/onboardingStore';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -10,6 +11,7 @@ interface ProtectedRouteProps {
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, accessToken, validateToken, logout } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
 
@@ -29,11 +31,18 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
         return;
       }
 
+      // Check onboarding status
+      const isCompleted = await useOnboardingStore.getState().checkOnboardingStatus();
+      if (!isCompleted && pathname !== '/onboarding') {
+        router.replace('/onboarding');
+        return;
+      }
+
       setIsLoading(false);
     };
 
     checkAuth();
-  }, [accessToken, validateToken, logout, router]);
+  }, [accessToken, validateToken, logout, router, pathname]);
 
   if (isLoading) {
     return (

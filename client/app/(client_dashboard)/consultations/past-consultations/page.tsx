@@ -89,7 +89,7 @@ export default function PastConsultationsPage() {
       if (sortBy) params.append('ordering', sortBy);
       
       const queryString = params.toString();
-      const url = `${process.env.NEXT_PUBLIC_API_URL || 'https://orr-backend-105825824472.asia-southeast2.run.app'}/past-consultations/${queryString ? `?${queryString}` : ''}`;
+      const url = `${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/past-consultations/${queryString ? `?${queryString}` : ''}`;
       
       const response = await fetch(url, {
         headers: {

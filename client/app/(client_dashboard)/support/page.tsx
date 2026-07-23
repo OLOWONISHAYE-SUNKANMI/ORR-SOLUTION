@@ -248,7 +248,7 @@ export default function SupportPage() {
                     return (
                       <div
                         key={ticket.id}
-                        onClick={() => router.push('/support-history')}
+                        onClick={() => router.push('/messages?ticketId=' + ticket.id)}
                         className="p-3 bg-background/50 rounded-lg border border-secondary/50 hover:border-lemon/30 cursor-pointer transition-all"
                       >
                         <div className="flex items-start justify-between gap-2">

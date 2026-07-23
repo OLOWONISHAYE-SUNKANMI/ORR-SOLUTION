@@ -34,7 +34,9 @@ import {
   Link as LinkIcon,
   Users,
   Check,
-  ChevronDown as ChevronDownIcon
+  ChevronDown as ChevronDownIcon,
+  Edit2,
+  Trash2
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -148,6 +150,9 @@ export default function DocumentWorkspace() {
   const [files, setFiles] = useState<VaultDocument[]>([]);
   const [folders, setFolders] = useState<VaultFolder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [editingFolder, setEditingFolder] = useState<VaultFolder | null>(null);
+  const [editFolderName, setEditFolderName] = useState('');
+  const [deletingFolderId, setDeletingFolderId] = useState<string | null>(null);
 
   // Use Zustand store for authenticated user data (most reliable source)
   const user = useAuthStore(state => state.user);
@@ -297,6 +302,35 @@ export default function DocumentWorkspace() {
       useToastStore.getState().addToast(msg, "error");
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const handleEditFolder = async () => {
+    if (!editingFolder || !editFolderName.trim()) return;
+    try {
+      await vaultApi.updateFolder(editingFolder.id, editFolderName.trim());
+      await fetchDocuments();
+      useToastStore.getState().addToast(`Folder renamed to "${editFolderName.trim()}"`, "success");
+    } catch (error: any) {
+      console.error('Failed to rename folder:', error);
+      useToastStore.getState().addToast(error?.response?.data?.message || 'Error renaming folder.', "error");
+    } finally {
+      setEditingFolder(null);
+      setEditFolderName('');
+    }
+  };
+
+  const handleConfirmDeleteFolder = async () => {
+    if (!deletingFolderId) return;
+    try {
+      await vaultApi.deleteFolder(deletingFolderId);
+      await fetchDocuments();
+      useToastStore.getState().addToast('Folder deleted successfully', "success");
+    } catch (error: any) {
+      console.error('Failed to delete folder:', error);
+      useToastStore.getState().addToast(error?.response?.data?.message || 'Error deleting folder.', "error");
+    } finally {
+      setDeletingFolderId(null);
     }
   };
 
@@ -610,19 +644,39 @@ export default function DocumentWorkspace() {
                 showSummary ? "grid-cols-1 sm:grid-cols-2 xl:grid-cols-3" : "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
               )}>
                 {filteredFolders.map(folder => (
-                  <button 
+                  <div 
                     key={folder.id}
-                    onClick={() => setCurrentFolderId(folder.id)}
-                    className="group bg-card/30 hover:bg-card/60 border border-white/10 rounded-2xl p-5 flex items-center gap-4 transition-all text-left"
+                    className="group bg-card/30 hover:bg-card/60 border border-white/10 rounded-2xl p-5 flex items-center gap-4 transition-all relative"
                   >
-                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary transition-transform group-hover:scale-110">
-                      <Folder fill="currentColor" fillOpacity={0.2} size={24} />
+                    <button
+                      onClick={() => setCurrentFolderId(folder.id)}
+                      className="flex items-center gap-4 flex-1 text-left"
+                    >
+                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary transition-transform group-hover:scale-110">
+                        <Folder fill="currentColor" fillOpacity={0.2} size={24} />
+                      </div>
+                      <div>
+                        <div className="text-white font-bold text-sm truncate max-w-[120px]">{folder.name}</div>
+                        <div className="text-white/40 text-[10px] uppercase font-black tracking-wider">{folder.doc_count || 0} Items</div>
+                      </div>
+                    </button>
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setEditingFolder(folder); setEditFolderName(folder.name); }}
+                        className="p-1.5 hover:bg-white/10 rounded-lg text-white/40 hover:text-white transition-colors"
+                        title="Rename folder"
+                      >
+                        <Edit2 size={14} />
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setDeletingFolderId(folder.id); }}
+                        className="p-1.5 hover:bg-rose-500/10 rounded-lg text-white/40 hover:text-rose-400 transition-colors"
+                        title="Delete folder"
+                      >
+                        <Trash2 size={14} />
+                      </button>
                     </div>
-                    <div>
-                      <div className="text-white font-bold text-sm truncate max-w-[120px]">{folder.name}</div>
-                      <div className="text-white/40 text-[10px] uppercase font-black tracking-wider">{folder.doc_count || 0} Items</div>
-                    </div>
-                  </button>
+                  </div>
                 ))}
               </div>
             </section>
@@ -711,6 +765,103 @@ export default function DocumentWorkspace() {
             onCreateSheet={(title) => handleCreateDocument(title, 'google_sheet')}
             onCreateSlide={(title) => handleCreateDocument(title, 'google_slide')}
           />
+        )}
+        
+        {/* Edit Folder Modal */}
+        {editingFolder && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => { setEditingFolder(null); setEditFolderName(''); }}
+              className="absolute inset-0 bg-black/80 backdrop-blur-xl"
+            />
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="relative bg-[#0d223c] border border-white/10 rounded-[3rem] p-10 max-w-lg w-full shadow-2xl overflow-hidden"
+            >
+              <h2 className="text-2xl font-black text-white uppercase italic mb-6">Rename <span className="text-primary">Folder</span></h2>
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-2">Folder Name</label>
+                  <input
+                    type="text"
+                    value={editFolderName}
+                    onChange={(e) => setEditFolderName(e.target.value)}
+                    placeholder="Enter new folder name..."
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-primary/50 transition-all"
+                    onKeyDown={(e) => e.key === 'Enter' && handleEditFolder()}
+                  />
+                </div>
+
+                <div className="flex gap-4 pt-4">
+                  <button
+                    onClick={() => { setEditingFolder(null); setEditFolderName(''); }}
+                    className="flex-1 px-6 py-4 bg-white/5 hover:bg-white/10 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleEditFolder}
+                    disabled={!editFolderName.trim()}
+                    className="flex-1 px-6 py-4 bg-primary hover:bg-primary/90 text-black rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-xl shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Save
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {deletingFolderId && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setDeletingFolderId(null)}
+              className="absolute inset-0 bg-black/80 backdrop-blur-xl"
+            />
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="relative bg-[#0d223c] border border-rose-500/20 rounded-[3rem] p-10 max-w-lg w-full shadow-2xl overflow-hidden"
+            >
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-14 h-14 rounded-2xl bg-rose-500/10 flex items-center justify-center text-rose-400">
+                  <Trash2 size={28} />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-black text-white uppercase italic">Delete <span className="text-rose-400">Folder</span></h2>
+                  <p className="text-white/40 text-sm mt-1">This action cannot be undone.</p>
+                </div>
+              </div>
+              <p className="text-white/60 text-sm mb-8 leading-relaxed">
+                Documents inside the folder will <strong>not</strong> be deleted — they will be moved to the root level. 
+                Any sub-folders will also be moved to the root level.
+              </p>
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setDeletingFolderId(null)}
+                  className="flex-1 px-6 py-4 bg-white/5 hover:bg-white/10 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmDeleteFolder}
+                  className="flex-1 px-6 py-4 bg-rose-500 hover:bg-rose-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-rose-500/20"
+                >
+                  Delete
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>

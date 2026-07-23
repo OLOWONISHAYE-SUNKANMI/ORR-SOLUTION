@@ -41,7 +41,7 @@ export default function BlogClientPage({ id }: { id: string }) {
 
   const { data, loading } = useCachedData<ResourcesData>(
     `orr_resources_content_${language}`,
-    `${process.env.NEXT_PUBLIC_API_URL || 'https://orr-backend-105825824472.asia-southeast2.run.app'}/admin-portal/v1/cms/resources-content/?lang=${language}`,
+    `${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/admin-portal/v1/cms/resources-content/?lang=${language}`,
     (data) => data
   );
 
