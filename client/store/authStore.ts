@@ -151,6 +151,7 @@ export const useAuthStore = create<AuthState>()(
           const response = await api.post("/api/auth/login/", {
             email,
             password,
+            portal: "client",
           });
 
           if (response.status === 200 || response.status === 201) {
@@ -300,10 +301,10 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      forgotPassword: async (email: string) => {
+        forgotPassword: async (email: string) => {
         set({ isLoading: true, error: null });
         try {
-          await api.post("/api/auth/forget-password/", { email });
+          await api.post("/api/auth/forget-password/", { email, portal: "client" });
           useToastStore
             .getState()
             .addToast("Password reset email sent!", "success");

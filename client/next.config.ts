@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: process.env.NODE_ENV === 'production' ? 'export' : undefined,
-  trailingSlash: true,
+  trailingSlash: false,
   transpilePackages: ['date-fns'],
   
   images: {
@@ -21,6 +21,24 @@ const nextConfig: NextConfig = {
   
   turbopack: {
     root: process.cwd(),
+  },
+  
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'Cross-Origin-Opener-Policy',
+            value: 'same-origin-allow-popups',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'no-referrer-when-downgrade',
+          },
+        ],
+      },
+    ];
   },
 };
 

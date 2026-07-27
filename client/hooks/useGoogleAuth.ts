@@ -9,6 +9,7 @@ export function useGoogleAuth() {
   const { googleLogin, isLoading } = useAuthStore();
   const router = useRouter();
   const googleButtonRef = useRef<HTMLDivElement | null>(null);
+  const isInitialized = useRef(false);
 
   const handleCredentialResponse = useCallback(async (response: any) => {
     try {
@@ -35,7 +36,7 @@ export function useGoogleAuth() {
     }
 
     const initializeGoogle = () => {
-      if (typeof window !== 'undefined' && (window as any).google) {
+      if (typeof window !== 'undefined' && (window as any).google && !isInitialized.current) {
         // Cancel any pending UI to prevent FedCM AbortError in React StrictMode
         (window as any).google.accounts.id.cancel();
         
@@ -47,6 +48,7 @@ export function useGoogleAuth() {
           use_fedcm_for_prompt: false,
           auto_select: false,
         });
+        isInitialized.current = true;
       }
     };
 
@@ -68,7 +70,7 @@ export function useGoogleAuth() {
   // Render Google's native hidden button as a reliable fallback
   const renderGoogleButton = useCallback((container: HTMLDivElement | null) => {
     googleButtonRef.current = container;
-    if (container && typeof window !== 'undefined' && (window as any).google) {
+    if (container && isInitialized.current && typeof window !== 'undefined' && (window as any).google) {
       (window as any).google.accounts.id.renderButton(container, {
         type: 'standard',
         theme: 'outline',
@@ -98,9 +100,10 @@ export function useGoogleAuth() {
           // If prompt fails, try opening Google's OAuth consent screen directly
           const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
           if (clientId) {
-            const redirectUri = window.location.origin;
+            // Must strictly match the Authorized redirect URIs in Google Cloud Console
+            const redirectUri = `${window.location.origin}/dashboard/`;
             const scope = 'openid email profile';
-            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}&prompt=select_account`;
+            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${scope}&prompt=select_account`;
             // Open in popup window
             const popup = window.open(authUrl, 'google-auth', 'width=500,height=600,menubar=no,toolbar=no');
             if (!popup) {
