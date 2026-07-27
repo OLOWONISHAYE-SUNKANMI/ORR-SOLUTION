@@ -30,7 +30,7 @@ export default function SuperAdminViewerClient({ id, document }: { id: string, d
   const handleSaveSandbox = async (docId: string, title: string, content: string) => {
      setIsSaving(true);
      try {
-        const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+        const apiBase = process.env.NEXT_PUBLIC_API_URL || 'https://orr-backend-105825824472.asia-southeast2.run.app';
         const token = localStorage.getItem('access_token') || localStorage.getItem('token');
         const headers: HeadersInit = { 'Content-Type': 'application/json' };
         if (token) headers['Authorization'] = `Bearer ${token}`;

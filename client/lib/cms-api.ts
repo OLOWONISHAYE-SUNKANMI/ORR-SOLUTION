@@ -1,6 +1,6 @@
 import { AuthService } from './auth';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || (process.env.NODE_ENV === 'production' ? 'https://orr-backend-105825824472.asia-southeast2.run.app' : 'http://127.0.0.1:8000');
+const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL || 'https://orr-backend-105825824472.asia-southeast2.run.app'}`;
 
 export class CMSService {
   private auth = AuthService.getInstance();
@@ -249,10 +249,10 @@ export class CMSService {
 
   // Service Pillar Pages
   async getStrategicAdvisoryContent(lang?: string): Promise<any> {
-    const url = lang 
+    const url = lang
       ? `${API_BASE_URL}/admin-portal/v1/cms/strategic-advisory/?lang=${lang}`
       : `${API_BASE_URL}/admin-portal/v1/cms/strategic-advisory/`;
-      
+
     console.log('🌐 Making API call to:', url);
     const response = await fetch(url);
 
@@ -284,10 +284,10 @@ export class CMSService {
   }
 
   async getOperationalSystemsContent(lang?: string): Promise<any> {
-    const url = lang 
+    const url = lang
       ? `${API_BASE_URL}/admin-portal/v1/cms/operational-systems/?lang=${lang}`
       : `${API_BASE_URL}/admin-portal/v1/cms/operational-systems/`;
-      
+
     console.log('🌐 Making API call to:', url);
     const response = await fetch(url);
 
@@ -319,10 +319,10 @@ export class CMSService {
   }
 
   async getLivingSystemsContent(lang?: string): Promise<any> {
-    const url = lang 
+    const url = lang
       ? `${API_BASE_URL}/admin-portal/v1/cms/living-systems/?lang=${lang}`
       : `${API_BASE_URL}/admin-portal/v1/cms/living-systems/`;
-      
+
     console.log('🌐 Making API call to:', url);
     const response = await fetch(url);
 

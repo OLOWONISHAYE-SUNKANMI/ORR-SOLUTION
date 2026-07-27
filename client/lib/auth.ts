@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || (process.env.NODE_ENV === 'production' ? 'https://orr-backend-105825824472.asia-southeast2.run.app' : 'http://127.0.0.1:8000');
+const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL || 'https://orr-backend-105825824472.asia-southeast2.run.app'}`;
 
 export interface User {
   id: number;
@@ -114,11 +114,11 @@ export class AuthService {
     if (!this.isAuthenticated()) {
       return false;
     }
-    
+
     // Only allow super_admin and content_editor roles
     const allowedRoles = ['super_admin', 'content_editor'];
     const canEdit = this.user?.is_superuser || allowedRoles.includes(this.user?.role || '');
-    
+
     return canEdit;
   }
 
