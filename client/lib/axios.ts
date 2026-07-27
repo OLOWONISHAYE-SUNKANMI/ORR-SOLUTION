@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: `${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}`,
+  baseURL: process.env.NEXT_PUBLIC_API_URL || (process.env.NODE_ENV === 'production' ? 'https://orr-backend-105825824472.asia-southeast2.run.app' : 'http://127.0.0.1:8000'),
   timeout: 60000,
   headers: {
     "Content-Type": "application/json",
