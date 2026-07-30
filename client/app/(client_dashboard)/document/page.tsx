@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { 
   Search, 
   Grid, 
@@ -36,7 +36,8 @@ import {
   Check,
   ChevronDown as ChevronDownIcon,
   Edit2,
-  Trash2
+  Trash2,
+  ArrowRight
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -1227,6 +1228,122 @@ function PaymentModal({ file, onClose }: { file: any, onClose: () => void }) {
 }
 
 function GeminiSummaryPanel({ file, onClose, onOpen, onShare }: { file: any, onClose: () => void, onOpen: () => void, onShare: () => void }) {
+  const [chatHistory, setChatHistory] = useState<{role: 'user'|'ai', content: string}[]>([]);
+  const [chatInput, setChatInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatHistory, isLoading]);
+
+  useEffect(() => {
+    if (!file?.id) return;
+    const fetchHistory = async () => {
+      setChatHistory([]); // Clear previous document's history
+      setIsLoading(true);
+      setError('');
+      try {
+        const token = localStorage.getItem('accessToken');
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://orr-backend-105825824472.asia-southeast2.run.app'}/ai/chat/?session_id=doc_${file.id}_client`, {
+          headers: {
+            'Authorization': token ? `Bearer ${token}` : ''
+          },
+          cache: 'no-store'
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.messages && Array.isArray(data.messages)) {
+            setChatHistory(data.messages.map((m: any) => ({
+              role: m.role === 'assistant' ? 'ai' : 'user',
+              content: m.content
+            })));
+          }
+        }
+      } catch (err: any) {
+        console.error("Failed to fetch history:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchHistory();
+  }, [file]);
+
+  const handleGenerateSummary = async () => {
+    if (!file?.id) return;
+    setIsLoading(true);
+    setChatHistory(prev => [...prev, { role: 'user', content: 'Generate a summary for this document.' }]);
+    
+    try {
+      const token = localStorage.getItem('accessToken');
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://orr-backend-105825824472.asia-southeast2.run.app'}/ai/document-summary/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : ''
+        },
+        body: JSON.stringify({ 
+          document_id: file.id, 
+          title: file.name,
+          session_id: `doc_${file.id}_client`
+        })
+      });
+      if (!res.ok) throw new Error('Failed to fetch AI summary');
+      const data = await res.json();
+      const summaryData = data.data || data;
+      
+      let aiResponse = summaryData.summary || 'Summary generation failed.';
+      if (summaryData.key_points?.length) {
+        aiResponse += '\n\n**Key Points:**\n- ' + summaryData.key_points.join('\n- ');
+      }
+      setChatHistory(prev => [...prev, { role: 'ai', content: aiResponse }]);
+    } catch (err: any) {
+      setChatHistory(prev => [...prev, { role: 'ai', content: err.message || 'Something went wrong' }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSendMessage = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!chatInput.trim() || isLoading) return;
+    
+    const message = chatInput.trim();
+    setChatInput('');
+    setChatHistory(prev => [...prev, { role: 'user', content: message }]);
+    setIsLoading(true);
+    
+    try {
+      const formattedHistory = chatHistory.map(msg => ({
+        role: msg.role === 'ai' ? 'model' : 'user',
+        content: msg.content
+      }));
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://orr-backend-105825824472.asia-southeast2.run.app'}/ai/chat/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : ''
+        },
+        body: JSON.stringify({ 
+          message: message,
+          session_id: `doc_${file.id}_client`,
+          document_id: file.id,
+          conversation_history: formattedHistory,
+          context: `The user is currently viewing a document titled "${file.name}".`
+        })
+      });
+      const data = await response.json();
+      const reply = data?.reply || data?.data?.reply || 'Sorry, I could not process that request.';
+      setChatHistory(prev => [...prev, { role: 'ai', content: reply }]);
+    } catch (err) {
+      setChatHistory(prev => [...prev, { role: 'ai', content: 'Sorry, I encountered an error.' }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (!file) return null;
 
   return (
@@ -1278,58 +1395,67 @@ function GeminiSummaryPanel({ file, onClose, onOpen, onShare }: { file: any, onC
           </div>
         </section>
 
-        {/* AI Summary Content */}
-        <section className="space-y-6">
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                  <Zap size={16} />
-                </div>
-                <h3 className="text-white/60 text-[10px] font-black uppercase tracking-[0.2em]">Executive Summary</h3>
+        {/* AI Chat Content */}
+        <section className="space-y-4">
+          {chatHistory.length === 0 && !isLoading ? (
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-6 text-center space-y-4">
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary mx-auto mb-2">
+                <Zap size={24} />
               </div>
-              <button className="text-primary text-[10px] font-black uppercase tracking-wider hover:underline flex items-center gap-1">
-                <RotateCcw size={12} />
-                Regenerate
+              <p className="text-sm text-white/60 leading-relaxed">
+                I can help you understand {file.name}. Would you like a summary?
+              </p>
+              <button 
+                onClick={handleGenerateSummary}
+                className="bg-primary hover:bg-primary/90 text-black py-3 px-6 rounded-xl font-bold text-sm transition-all shadow-xl shadow-primary/20"
+              >
+                Generate Summary
               </button>
             </div>
-            <p className="text-white/80 text-sm leading-relaxed">
-              This document outlines the strategic initiatives for the upcoming fiscal year. It focuses on market expansion in the EMEA region, operational efficiency through AI integration, and a renewed commitment to sustainable growth patterns.
-            </p>
-          </div>
+          ) : (
+            chatHistory.map((msg, idx) => (
+              <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[85%] rounded-2xl p-4 text-sm leading-relaxed ${
+                  msg.role === 'user' 
+                  ? 'bg-primary/20 text-white border border-primary/30 rounded-tr-sm' 
+                  : 'bg-white/5 text-white/80 border border-white/10 rounded-tl-sm'
+                }`}>
+                  <div className="whitespace-pre-wrap">{msg.content}</div>
+                </div>
+              </div>
+            ))
+          )}
 
-          <div>
-            <h4 className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em] mb-3">Key Takeaways</h4>
-            <ul className="space-y-3">
-              {[
-                "Targeting 25% growth in EMEA market by Q4 2026.",
-                "Reduction in operational overhead by 15% using automated workflows.",
-                "Implementation of a new client success framework across all departments."
-              ].map((item, i) => (
-                <li key={i} className="flex gap-3 text-sm text-white/60 leading-relaxed">
-                  <span className="text-primary mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0 bg-primary shadow-[0_0_8px_rgba(var(--primary-rgb),0.5)]" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em] mb-3">Suggested Actions</h4>
-            <div className="space-y-2">
-              {[
-                "Review EMEA expansion draft",
-                "Schedule AI integration workshop",
-                "Update stakeholder reports"
-              ].map((action, i) => (
-                <button key={i} className="w-full bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl p-3 text-left text-xs text-white/60 transition-all flex items-center justify-between group">
-                  {action}
-                  <ChevronRight size={14} className="opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
-                </button>
-              ))}
+          {isLoading && (
+            <div className="flex justify-start">
+              <div className="bg-white/5 rounded-2xl p-4 border border-white/10 text-white/40 rounded-tl-sm flex items-center gap-2">
+                <Loader2 size={16} className="animate-spin" />
+                <span className="text-xs font-bold uppercase tracking-wider">Gemini is thinking...</span>
+              </div>
             </div>
-          </div>
+          )}
+          <div ref={chatEndRef} />
         </section>
+      </div>
+
+      <div className="mt-4 pt-4 border-t border-white/10">
+        <form onSubmit={handleSendMessage} className="relative">
+          <input
+             type="text"
+             value={chatInput}
+             onChange={(e) => setChatInput(e.target.value)}
+             disabled={isLoading}
+             placeholder="Ask Gemini about this document..."
+             className="w-full bg-[#1a1f26] border border-white/10 rounded-full py-4 pl-5 pr-14 text-sm text-white focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 disabled:opacity-50 shadow-inner"
+          />
+          <button 
+             type="submit"
+             disabled={!chatInput.trim() || isLoading}
+             className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-primary text-black rounded-full hover:bg-lemon transition-colors disabled:opacity-50 shadow-lg shadow-primary/20"
+          >
+             <ArrowRight size={16} />
+          </button>
+        </form>
       </div>
 
       <div className="mt-8 pt-8 border-t border-white/10 space-y-3">

@@ -430,6 +430,20 @@ export default function DocumentViewerClient({ id }: { id: string }) {
     return () => clearTimeout(timer);
   }, []);
 
+  // Fetch chat history
+  useEffect(() => {
+    if (id) {
+      vaultApi.getChatHistory(`doc_${id}_client`).then(history => {
+        if (history && history.length > 0) {
+          setMessages(history.map((m: any) => ({
+            role: m.role === 'assistant' ? 'ai' : 'user',
+            content: m.content
+          })));
+        }
+      });
+    }
+  }, [id]);
+
   const handleSendMessage = async () => {
     if (!input.trim() || aiLoading || !document) return;
     const userMsg = input.trim();
@@ -440,10 +454,30 @@ export default function DocumentViewerClient({ id }: { id: string }) {
 
     try {
       const history = messages.map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.content }));
+      
+      let rawType = document.document_type || document.type;
+      let detectedType = 'pdf';
+      if (rawType && rawType !== 'file') {
+        detectedType = rawType;
+      } else {
+        const nameSource = document.name || document.title || document.link || '';
+        const match = nameSource.match(/\.([a-z0-9]+)(\?.*)?$/i);
+        if (match) detectedType = match[1];
+      }
+      const normalizedType = (document.document_source === 'google_doc' ? 'docx' :
+        document.document_source === 'google_sheet' ? 'xlsx' :
+        document.document_source === 'google_slide' ? 'pptx' :
+        detectedType).toLowerCase().replace(/^\./, '');
+
       const context = `The user is viewing a document titled "${document.name}". Type: ${normalizedType}.`;
       
-      const { adminVaultApi } = await import('@/lib/admin-vault-api');
-      const reply = await adminVaultApi.askAIAssistant(userMsg, context, history);
+      const reply = await vaultApi.askAIAssistant(
+        userMsg, 
+        context, 
+        history, 
+        `doc_${id}_client`, 
+        id
+      );
       setMessages([...newMessages, { role: 'ai', content: reply }]);
     } catch (err) {
       console.error(err);

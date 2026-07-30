@@ -30,7 +30,7 @@ api.interceptors.request.use(
       "/client/register/",
       "/api/auth/forget-password/",
       "/api/auth/verify-reset-password/",
-      "/api/auth/verify-email/",
+      "/verify-email/",
       "/api/auth/google-login/",
     ];
 

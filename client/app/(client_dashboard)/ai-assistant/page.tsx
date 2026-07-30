@@ -33,7 +33,7 @@ export default function AIAssistantPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [sessionId] = useState(() => Math.random().toString(36).substring(2, 10));
+  const [sessionId] = useState("global_client");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -44,6 +44,28 @@ export default function AIAssistantPage() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const response = await api.get(`/ai/chat/?session_id=${sessionId}&t=${Date.now()}`);
+        const historyMessages = response.data?.data?.messages || response.data?.messages;
+        if (historyMessages && Array.isArray(historyMessages) && historyMessages.length > 0) {
+          setMessages(
+            historyMessages.map((m: any, idx: number) => ({
+              id: `hist-${idx}`,
+              role: m.role === "assistant" ? "assistant" : "user",
+              content: m.content,
+              timestamp: new Date(),
+            }))
+          );
+        }
+      } catch (err) {
+        console.error("Failed to fetch chat history:", err);
+      }
+    };
+    fetchHistory();
+  }, [sessionId]);
 
   const sendMessage = async (text: string) => {
     if (!text.trim() || isLoading) return;

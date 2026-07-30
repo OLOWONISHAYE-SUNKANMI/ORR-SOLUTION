@@ -28,13 +28,7 @@ export default function Chatbot() {
     return 'Website';
   };
 
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      text: `Welcome back! I’m an Agent from ORR Solution. I noticed you were checking out our ${getPageName(pathname)}. Do you have any questions about how to get started?`,
-      sender: 'bot'
-    }
-  ]);
+  const [messages, setMessages] = useState<any[]>([]);
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -44,10 +38,28 @@ export default function Chatbot() {
   };
 
   useEffect(() => {
-    // Update initial message when pathname changes (if only 1 message exists)
-    if (messages.length === 1 && messages[0].sender === 'bot') {
+    // Load from localStorage first
+    const saved = localStorage.getItem('orr_chatbot_history');
+    if (saved) {
+      try {
+        setMessages(JSON.parse(saved));
+      } catch (e) {
+        // Failed to parse, use default
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      localStorage.setItem('orr_chatbot_history', JSON.stringify(messages));
+    }
+  }, [messages]);
+
+  useEffect(() => {
+    // Set initial greeting only if there are no messages
+    if (messages.length === 0) {
       setMessages([{
-        id: 1,
+        id: Date.now(),
         text: `Welcome back! I’m an Agent from ORR Solution. I noticed you were checking out our ${getPageName(pathname)}. Do you have any questions about how to get started?`,
         sender: 'bot'
       }]);
@@ -61,7 +73,7 @@ export default function Chatbot() {
 
       return () => clearTimeout(timer);
     }
-  }, [pathname]);
+  }, [pathname, messages.length]);
 
   const faqSuggestions: string[] = faqs.slice(0, 3).map((faq: any) => stripHtml(faq.question));
   const suggestions: string[] = faqSuggestions.length > 0 ? faqSuggestions : [
