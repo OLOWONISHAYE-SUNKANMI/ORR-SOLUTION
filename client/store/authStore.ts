@@ -398,7 +398,7 @@ export const useAuthStore = create<AuthState>()(
       verifyEmail: async (uid: string, token: string, email: string) => {
         set({ isLoading: true, error: null });
         try {
-          await api.post("/api/auth/verify-email/", { uid, token, email });
+          await api.post("/verify-email/", { uid, token, email });
           useToastStore
             .getState()
             .addToast("Email verified successfully!", "success");

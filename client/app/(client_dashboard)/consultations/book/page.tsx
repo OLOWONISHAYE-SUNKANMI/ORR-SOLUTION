@@ -42,7 +42,8 @@ export default function MeetingRequestPage() {
   const [eventTypes, setEventTypes] = useState<EventType[]>([]);
   const [meetingSlots, setMeetingSlots] = useState<TimeSlot[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
-  const { createMeeting, isLoading } = useMeetingStore();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { createMeeting, isLoading: storeIsLoading } = useMeetingStore();
   const { addToast } = useToastStore();
   const router = useRouter();
 
@@ -192,6 +193,8 @@ export default function MeetingRequestPage() {
       return;
     }
 
+    setIsSubmitting(true);
+
     const baseMeetingData = {
       meeting_type: selectedType as 'discovery' | 'first_meeting' | 'follow_up' | 'report_review',
       requested_datetime: selectedTimeSlot.start_time,
@@ -245,6 +248,8 @@ export default function MeetingRequestPage() {
       console.error('Error creating meeting:', error);
       const errorMessage = error.response?.data?.message || 'Failed to create meeting. Please try again.';
       addToast(errorMessage, 'error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -516,10 +521,10 @@ export default function MeetingRequestPage() {
         <div className="flex justify-center mt-8">
           <button
             onClick={handleSubmit}
-            disabled={isLoading || !selectedTimeSlot}
+            disabled={isSubmitting || !selectedTimeSlot}
             className=" cursor-pointer px-10 py-2 bg-lemon text-background rounded-full font-semibold text-sm disabled:opacity-50"
           >
-            {isLoading ? interpolate(t.dashboard.consultations.book.submitting) : interpolate(t.dashboard.consultations.book.submit)}
+            {isSubmitting ? interpolate(t.dashboard.consultations.book.submitting) : interpolate(t.dashboard.consultations.book.submit)}
           </button>
         </div>
 
