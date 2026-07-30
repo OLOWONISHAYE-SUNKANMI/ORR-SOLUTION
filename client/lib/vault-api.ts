@@ -230,11 +230,23 @@ export const vaultApi = {
     return data;
   },
 
-  askAIAssistant: async (message: string, context?: string, history?: any[]): Promise<string> => {
+  getChatHistory: async (sessionId: string): Promise<any[]> => {
+    try {
+      const response = await axiosInstance.get(`/ai/chat/?session_id=${sessionId}&t=${Date.now()}`);
+      return response.data?.data?.messages || response.data?.messages || [];
+    } catch (e) {
+      console.error('Error fetching chat history:', e);
+      return [];
+    }
+  },
+
+  askAIAssistant: async (message: string, context?: string, history?: any[], sessionId?: string, documentId?: string | number): Promise<string> => {
     const response = await axiosInstance.post('/ai/chat/', {
       message,
       context,
       conversation_history: history || [],
+      session_id: sessionId,
+      document_id: documentId,
     });
     return response.data?.reply || response.data?.data?.reply || 'No response from AI.';
   },

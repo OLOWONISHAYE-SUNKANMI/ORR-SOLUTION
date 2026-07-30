@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { vaultApi } from '@/lib/vault-api';
 
 interface RightSidebarProps {
+   documentId?: string | number;
    documentTitle: string;
    documentContent?: string;
    documentType?: string;
@@ -13,15 +14,29 @@ interface RightSidebarProps {
 
 type TabType = 'ai' | 'comments' | 'history' | 'properties';
 
-export default function RightSidebar({ documentTitle, documentContent, documentType }: RightSidebarProps) {
+export default function RightSidebar({ documentId, documentTitle, documentContent, documentType }: RightSidebarProps) {
    const [activeTab, setActiveTab] = useState<TabType>('ai');
    
    // AI State
    const [aiInput, setAiInput] = useState('');
    const [isAiLoading, setIsAiLoading] = useState(false);
    const [aiMessages, setAiMessages] = useState<{id: string, role: 'user'|'assistant', content: string}[]>([
-      { id: '1', role: 'assistant', content: `I can help you structure the data in ${documentTitle || 'this asset'}. Would you like an outline?` }
+      { id: 'initial', role: 'assistant', content: `I can help you structure the data in ${documentTitle || 'this asset'}. Would you like an outline?` }
    ]);
+
+   React.useEffect(() => {
+      if (documentId) {
+         vaultApi.getChatHistory(`doc_${documentId}_client`).then(history => {
+            if (history && history.length > 0) {
+               setAiMessages(history.map((m: any, i) => ({
+                  id: m.id || i.toString(),
+                  role: m.role,
+                  content: m.content
+               })));
+            }
+         });
+      }
+   }, [documentId]);
 
    const handleAiSubmit = async (e?: React.FormEvent, customPrompt?: string) => {
       e?.preventDefault();
@@ -35,7 +50,7 @@ export default function RightSidebar({ documentTitle, documentContent, documentT
       try {
          const history = aiMessages.map(m => ({ role: m.role, content: m.content }));
          const context = `Document type: ${documentType || 'unknown'}. Title: ${documentTitle || 'Untitled'}. Content excerpt: ${documentContent ? documentContent.substring(0, 1000) : 'No content'}`;
-         const reply = await vaultApi.askAIAssistant(text, context, history);
+         const reply = await vaultApi.askAIAssistant(text, context, history, documentId ? `doc_${documentId}_client` : undefined, documentId);
          
          if (reply.includes("I'm experiencing a temporary issue") || reply.includes("RESOURCE_EXHAUSTED")) {
             setAiMessages(prev => [...prev, { id: Date.now().toString(), role: 'assistant', content: 'AI Quota Exceeded. Please check your Google Cloud Billing limits for the Gemini API.' }]);

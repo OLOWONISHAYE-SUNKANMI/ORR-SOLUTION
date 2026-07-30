@@ -151,6 +151,7 @@ export default function WorkspaceShell({
             {!isFullScreen && activeDocument && (
                <RightSidebar 
                   key={activeDocument.id || activeDocument.title}
+                  documentId={activeDocument.id}
                   documentTitle={activeDocument.title} 
                   documentContent={activeDocument.description || activeDocument.content}
                   documentType={activeDocument.type}

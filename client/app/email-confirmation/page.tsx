@@ -17,7 +17,7 @@ function EmailConfirmationContent() {
 
   useEffect(() => {
     if (email && token) {
-      api.post('/api/auth/verify-email/', { email, token })
+      api.post('/verify-email/', { email, token })
         .then(() => setStatus('success'))
         .catch(() => setStatus('error'));
     }
