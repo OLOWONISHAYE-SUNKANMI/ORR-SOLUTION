@@ -249,10 +249,10 @@ export class CMSService {
 
   // Service Pillar Pages
   async getStrategicAdvisoryContent(lang?: string): Promise<any> {
-    const url = lang 
+    const url = lang
       ? `${API_BASE_URL}/admin-portal/v1/cms/strategic-advisory/?lang=${lang}`
       : `${API_BASE_URL}/admin-portal/v1/cms/strategic-advisory/`;
-      
+
     console.log('🌐 Making API call to:', url);
     const response = await fetch(url);
 
@@ -284,10 +284,10 @@ export class CMSService {
   }
 
   async getOperationalSystemsContent(lang?: string): Promise<any> {
-    const url = lang 
+    const url = lang
       ? `${API_BASE_URL}/admin-portal/v1/cms/operational-systems/?lang=${lang}`
       : `${API_BASE_URL}/admin-portal/v1/cms/operational-systems/`;
-      
+
     console.log('🌐 Making API call to:', url);
     const response = await fetch(url);
 
@@ -319,10 +319,10 @@ export class CMSService {
   }
 
   async getLivingSystemsContent(lang?: string): Promise<any> {
-    const url = lang 
+    const url = lang
       ? `${API_BASE_URL}/admin-portal/v1/cms/living-systems/?lang=${lang}`
       : `${API_BASE_URL}/admin-portal/v1/cms/living-systems/`;
-      
+
     console.log('🌐 Making API call to:', url);
     const response = await fetch(url);
 

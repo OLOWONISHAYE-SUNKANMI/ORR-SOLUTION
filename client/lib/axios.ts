@@ -87,7 +87,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       const url = error.config?.url || "";
       const errorData = error.response?.data;
-      
+
       const isLoginEndpoint = url.includes("/auth/login/") || url.includes("/login/");
       const isTokenInvalid =
         errorData?.data?.code === "token_not_valid" ||
@@ -99,7 +99,7 @@ api.interceptors.response.use(
         if (typeof window !== 'undefined') {
           localStorage.removeItem("accessToken");
           localStorage.removeItem("refreshToken");
-          
+
           // Only redirect if not already on an auth page
           if (!window.location.pathname.startsWith('/login') && !window.location.pathname.startsWith('/register')) {
             window.location.href = "/login/";

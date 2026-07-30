@@ -114,11 +114,11 @@ export class AuthService {
     if (!this.isAuthenticated()) {
       return false;
     }
-    
+
     // Only allow super_admin and content_editor roles
     const allowedRoles = ['super_admin', 'content_editor'];
     const canEdit = this.user?.is_superuser || allowedRoles.includes(this.user?.role || '');
-    
+
     return canEdit;
   }
 
