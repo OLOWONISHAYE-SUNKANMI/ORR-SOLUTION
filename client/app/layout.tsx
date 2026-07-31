@@ -3,6 +3,7 @@ import "./globals.css";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { LanguageProvider } from "@/lib/i18n/LanguageContext";
 import { ToastContainer } from "./components/Toast";
+import TrailingSlashRedirect from "../components/TrailingSlashRedirect";
 
 const geistSans = {
   variable: "",
@@ -133,6 +134,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
+        <TrailingSlashRedirect />
         <ThemeProvider>
           <LanguageProvider>
             {children}

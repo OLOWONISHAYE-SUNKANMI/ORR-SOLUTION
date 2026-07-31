@@ -1,3 +1,4 @@
+import { Loader2 } from "lucide-react";
 "use client";
 import React, { useState, useEffect } from "react";
 import { useProfileStore } from "@/store/profileStore";
@@ -79,6 +80,16 @@ export default function AccountSettingsPage() {
     };
     reader.readAsDataURL(file);
   };
+
+
+  if (loadingCountries) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4 animate-in fade-in duration-500">
+        <Loader2 className="w-12 h-12 text-primary animate-spin" />
+        <p className="text-sm text-foreground/50 font-medium">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen w-full bg-background text-white px-4 sm:px-6 lg:px-12 py-4 sm:py-8">

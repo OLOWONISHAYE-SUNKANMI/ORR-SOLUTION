@@ -1,4 +1,5 @@
 "use client";
+import { Loader2 } from "lucide-react";
 
 import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -159,6 +160,16 @@ export default function MeetingRequestPage() {
       console.error('Error creating meeting:', error);
     }
   };
+
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4 animate-in fade-in duration-500">
+        <Loader2 className="w-12 h-12 text-primary animate-spin" />
+        <p className="text-sm text-foreground/50 font-medium">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen w-full bg-background text-foreground px-4 py-8 md:px-10">

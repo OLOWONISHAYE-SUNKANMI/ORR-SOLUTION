@@ -1,3 +1,4 @@
+import { Loader2 } from "lucide-react";
 "use client";
 
 import React, { useEffect } from "react";
@@ -11,6 +12,16 @@ export default function PlansBillingPage() {
   useEffect(() => {
     fetchBillingHistory();
   }, [fetchBillingHistory]);
+
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4 animate-in fade-in duration-500">
+        <Loader2 className="w-12 h-12 text-primary animate-spin" />
+        <p className="text-sm text-foreground/50 font-medium">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen w-full text-white px-4 py-10 flex flex-col items-center">

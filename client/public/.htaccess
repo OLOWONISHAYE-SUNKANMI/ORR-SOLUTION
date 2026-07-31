@@ -3,11 +3,47 @@
 
   # Redirect trailing slashes to non-trailing slashes (e.g. /login/ -> /login)
   RewriteCond %{REQUEST_FILENAME} !-d
-  RewriteCond %{REQUEST_URI} (.+)/$
-  RewriteRule ^ %1 [R=301,L]
+  RewriteRule ^(.*)/$ /$1 [R=301,L]
 
   # Try to serve the request as a .html file if it exists
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME}.html -f
   RewriteRule ^(.*)$ $1.html [L]
+
+  # Dynamic route fallbacks for Next.js static export
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^document/([^/]+)/?$ "document/[id].html" [L]
+
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^account/invoices/([^/]+)/?$ "account/invoices/[id].html" [L]
+
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^consultations/meeting/([^/]+)/?$ "consultations/meeting/[id].html" [L]
+
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^problem-request/history/([^/]+)/?$ "problem-request/history/[id].html" [L]
+
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^blog/([^/]+)/?$ "blog/[slug].html" [L]
+
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^pages/([^/]+)/?$ "pages/[slug].html" [L]
+
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^resources-blogs/([^/]+)/?$ "resources-blogs/[slug].html" [L]
+
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^admin/vault/([^/]+)/?$ "admin/vault/[id].html" [L]
+
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^([^/]+)/?$ "[slug].html" [L]
 </IfModule>

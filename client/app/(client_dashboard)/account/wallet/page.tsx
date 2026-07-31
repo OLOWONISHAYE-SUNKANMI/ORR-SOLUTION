@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { ChevronDown, Wallet, CreditCard as CreditCardIcon } from "lucide-react";
+import { Loader2, ChevronDown, Wallet, CreditCard as CreditCardIcon } from "lucide-react";
 import { useWalletStore } from "@/store/walletStore";
 import { useToastStore } from "@/store/toastStore";
 import { useLanguage, interpolate } from "@/lib/i18n/LanguageContext";
@@ -77,6 +77,16 @@ export default function PlansBillingPage() {
     }
     return { name: plan.name, description: plan.description };
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4 animate-in fade-in duration-500">
+        <Loader2 className="w-12 h-12 text-primary animate-spin" />
+        <p className="text-sm text-foreground/50 font-medium">Loading...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen w-full text-white px-4 py-10 flex flex-col items-center">
       <div className="w-full max-w-6xl">

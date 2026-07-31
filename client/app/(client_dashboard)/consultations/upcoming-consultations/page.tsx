@@ -1,4 +1,5 @@
 "use client";
+import { Loader2 } from "lucide-react";
 
 import React, { useEffect, useState } from "react";
 import GoogleCalendarView from "@/app/components/ui/GoogleCalendarView";
@@ -89,6 +90,16 @@ export default function SchedulingPage() {
       resource: { color: "#0ec277", meetingLink: meeting.meeting_link }
     };
   });
+
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4 animate-in fade-in duration-500">
+        <Loader2 className="w-12 h-12 text-primary animate-spin" />
+        <p className="text-sm text-foreground/50 font-medium">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground p-4 sm:p-6 md:p-10 lg:p-14 star">
