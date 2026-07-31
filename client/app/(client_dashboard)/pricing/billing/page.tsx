@@ -1,5 +1,5 @@
-import { Loader2 } from "lucide-react";
 "use client";
+import { Loader2 } from "lucide-react";
 
 import React, { useEffect } from "react";
 import { useBillingStore } from "@/store/billingStore";

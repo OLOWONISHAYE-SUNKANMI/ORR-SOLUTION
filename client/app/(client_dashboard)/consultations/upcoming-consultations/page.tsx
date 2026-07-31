@@ -77,8 +77,22 @@ export default function SchedulingPage() {
 
   const upcomingMeetings = getUpcomingMeetings();
 
-  // Convert meetings to calendar events
-  const events: EventItem[] = upcomingMeetings.map(meeting => {
+  // Convert UPCOMING meetings to calendar events for the sidebar
+  const upcomingEvents: EventItem[] = upcomingMeetings.map(meeting => {
+    const startDate = new Date(meeting.requested_datetime);
+    const endDate = new Date(startDate.getTime() + 60 * 60000); // Default 1 hour duration
+    
+    return {
+      id: meeting.id,
+      title: `${meeting.meeting_type.replace('_', ' ')} - ${meeting.agenda?.substring(0, 30) || 'Meeting'}...`,
+      start: startDate,
+      end: endDate,
+      resource: { color: "#0ec277", meetingLink: meeting.meeting_link }
+    };
+  });
+
+  // Convert ALL meetings to calendar events for the main calendar
+  const allEvents: EventItem[] = (meetings || []).map(meeting => {
     const startDate = new Date(meeting.requested_datetime);
     const endDate = new Date(startDate.getTime() + 60 * 60000); // Default 1 hour duration
     
@@ -130,12 +144,12 @@ export default function SchedulingPage() {
 
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 h-auto lg:h-[calc(100vh-250px)]">
           <aside className="w-full lg:w-80 xl:w-96 flex-shrink-0 h-full">
-            <EventSidebar items={events} isLoading={isLoading} />
+            <EventSidebar items={allEvents} isLoading={isLoading} />
           </aside>
 
           <main className="flex-1 h-full min-h-[400px] md:min-h-[600px]">
             <GoogleCalendarView 
-              events={events} 
+              events={allEvents} 
               onSelectEvent={(event: any) => setSelectedEvent(event as EventItem)}
             />
           </main>

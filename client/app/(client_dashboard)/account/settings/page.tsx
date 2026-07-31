@@ -1,5 +1,5 @@
-import { Loader2 } from "lucide-react";
 "use client";
+import { Loader2 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { useProfileStore } from "@/store/profileStore";
 import { useAuthStore } from "@/store/authStore";
