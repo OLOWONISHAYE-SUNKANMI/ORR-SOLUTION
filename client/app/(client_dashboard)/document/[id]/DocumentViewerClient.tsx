@@ -424,11 +424,7 @@ export default function DocumentViewerClient({ id }: { id: string }) {
   const [input, setInput] = useState('');
   const [accessStatus, setAccessStatus] = useState<'idle' | 'requesting' | 'pending' | 'granted'>('idle');
 
-  // Fetch document client-side
-  useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 1000);
-    return () => clearTimeout(timer);
-  }, []);
+  // Removed redundant timer
 
   // Fetch chat history
   useEffect(() => {

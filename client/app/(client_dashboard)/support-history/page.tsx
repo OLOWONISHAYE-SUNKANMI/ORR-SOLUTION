@@ -1,4 +1,5 @@
 "use client";
+import { Loader2 } from "lucide-react";
 
 import { useState, useEffect } from "react";
 import { ChevronDown, Search, MessageSquare, Clock, CheckCircle, Send } from "lucide-react";
@@ -83,6 +84,16 @@ export default function SupportHistory() {
   };
 
   const allTickets = tickets || [];
+
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4 animate-in fade-in duration-500">
+        <Loader2 className="w-12 h-12 text-primary animate-spin" />
+        <p className="text-sm text-foreground/50 font-medium">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen w-full bg-background text-foreground p-6 md:p-12">

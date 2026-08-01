@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { ChevronDown, Wallet, CreditCard as CreditCardIcon } from "lucide-react";
+import { Loader2, ChevronDown, Wallet, CreditCard as CreditCardIcon } from "lucide-react";
 import { useWalletStore } from "@/store/walletStore";
 import { useToastStore } from "@/store/toastStore";
 import { useLanguage, interpolate } from "@/lib/i18n/LanguageContext";
@@ -77,6 +77,8 @@ export default function PlansBillingPage() {
     }
     return { name: plan.name, description: plan.description };
   };
+
+
   return (
     <div className="min-h-screen w-full text-white px-4 py-10 flex flex-col items-center">
       <div className="w-full max-w-6xl">

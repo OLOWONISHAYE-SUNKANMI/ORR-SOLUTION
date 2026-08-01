@@ -1,4 +1,5 @@
 "use client";
+import { Loader2 } from "lucide-react";
 import React, { useState } from "react";
 import { usePreMeetingStore } from "@/store/preMeetingStore";
 import { useToastStore } from "@/store/toastStore";
@@ -26,6 +27,16 @@ export default function PreMeetingPage() {
     await submitPreMeetingForm(meetingId, formData);
     router.push('/meeting-request');
   };
+
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4 animate-in fade-in duration-500">
+        <Loader2 className="w-12 h-12 text-primary animate-spin" />
+        <p className="text-sm text-foreground/50 font-medium">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen w-full bg-background flex justify-center items-start py-20 px-4">

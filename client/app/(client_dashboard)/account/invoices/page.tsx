@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import {
+import { Loader2,
   FileText,
   Search,
   Printer,
@@ -453,6 +453,8 @@ export default function ClientInvoicesPage() {
 }
 
 function DetailItem({ icon, label, value }: { icon: React.ReactNode, label: string, value: string }) {
+
+
   return (
     <div className="flex items-start gap-4 p-4 bg-white/5 rounded-2xl border border-white/5 group hover:bg-white/10 transition-all duration-300">
       <div className="p-2.5 bg-white/5 rounded-xl text-foreground/40 group-hover:text-[#22C55E] transition-colors">

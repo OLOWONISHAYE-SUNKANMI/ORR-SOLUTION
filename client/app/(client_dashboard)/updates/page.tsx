@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, X, ChevronDown, ChevronUp } from "lucide-react";
+import { Loader2, Search, X, ChevronDown, ChevronUp } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useNotificationStore } from "@/store/notificationStore";
 import { useLanguage, interpolate } from "@/lib/i18n/LanguageContext";
@@ -24,6 +24,16 @@ export default function NotificationPage() {
     }
     setExpandedIds(newExpanded);
   };
+
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4 animate-in fade-in duration-500">
+        <Loader2 className="w-12 h-12 text-primary animate-spin" />
+        <p className="text-sm text-foreground/50 font-medium">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen w-full bg-background text-foreground font-poppins relative overflow-x-hidden">

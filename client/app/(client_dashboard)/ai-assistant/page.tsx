@@ -33,6 +33,7 @@ export default function AIAssistantPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetchingHistory, setIsFetchingHistory] = useState(true);
   const [sessionId] = useState("global_client");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -62,6 +63,8 @@ export default function AIAssistantPage() {
         }
       } catch (err) {
         console.error("Failed to fetch chat history:", err);
+      } finally {
+        setIsFetchingHistory(false);
       }
     };
     fetchHistory();
@@ -180,7 +183,12 @@ export default function AIAssistantPage() {
       <div className="flex-1 overflow-y-auto px-4 py-6">
         <div className="max-w-3xl mx-auto space-y-6">
           {/* Welcome State */}
-          {messages.length === 0 && (
+          {isFetchingHistory ? (
+            <div className="flex flex-col items-center justify-center py-20 space-y-4 animate-in fade-in duration-500">
+              <Loader2 className="w-10 h-10 text-primary animate-spin" />
+              <p className="text-sm text-foreground/50 font-medium">Loading conversation...</p>
+            </div>
+          ) : messages.length === 0 && (
             <div className="text-center py-12 space-y-8 animate-in fade-in duration-500">
               <div className="space-y-4">
                 <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-emerald-500/20 via-primary/20 to-teal-400/20 border border-primary/20 flex items-center justify-center">

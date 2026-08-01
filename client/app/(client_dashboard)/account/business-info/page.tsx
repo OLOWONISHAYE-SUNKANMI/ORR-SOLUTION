@@ -3,7 +3,9 @@
 import React, { useState } from 'react';
 import { Save, Edit, Building, MapPin, Phone, Mail, Globe, Users, Calendar, DollarSign, FileText, Camera, Check, X, Plus, Trash2 } from 'lucide-react';
 import { useLanguage, interpolate } from "@/lib/i18n/LanguageContext";
-
+import { useAuthStore } from "@/store/authStore";
+import { useProfileStore } from "@/store/profileStore";
+import { useOnboardingStore } from "@/store/onboardingStore";
 interface BusinessInfo {
   companyName: string;
   legalName: string;
@@ -113,11 +115,47 @@ const employeeCounts = ['1-10', '11-25', '26-50', '51-100', '101-500', '500+'];
 const revenueRanges = ['<$100K', '$100K-$500K', '$500K-$1M', '$1M-$5M', '$5M-$10M', '$10M+'];
 
 export default function BusinessInfoPage() {
-  const [businessInfo, setBusinessInfo] = useState<BusinessInfo>(initialBusinessInfo);
   const { t } = useLanguage();
+  const { user } = useAuthStore();
+  const { profile, fetchProfile } = useProfileStore();
+  const { onboardingStatus, checkOnboardingStatus } = useOnboardingStore();
+  
+  const [businessInfo, setBusinessInfo] = useState<BusinessInfo>(initialBusinessInfo);
   const [isEditing, setIsEditing] = useState(false);
   const [activeSection, setActiveSection] = useState('basic');
   const [hasChanges, setHasChanges] = useState(false);
+
+  React.useEffect(() => {
+    fetchProfile();
+    checkOnboardingStatus();
+  }, [fetchProfile, checkOnboardingStatus]);
+
+  React.useEffect(() => {
+    if (!hasChanges && (user || onboardingStatus || profile)) {
+      setBusinessInfo(prev => ({
+        ...prev,
+        companyName: user ? `${user.first_name} ${user.last_name}` : prev.companyName,
+        legalName: user ? `${user.first_name} ${user.last_name}` : prev.legalName,
+        industry: onboardingStatus?.portal_interests || prev.industry,
+        businessType: onboardingStatus?.user_type || prev.businessType,
+        description: onboardingStatus?.project_description || prev.description,
+        email: user?.email || prev.email,
+        phone: profile?.phone_number || prev.phone,
+        address: {
+          ...prev.address,
+          city: profile?.city || prev.address.city,
+          zipCode: profile?.zip_code || prev.address.zipCode,
+          country: onboardingStatus?.jurisdiction || profile?.country || prev.address.country
+        },
+        keyPersonnel: user ? [{
+          id: '1',
+          name: `${user.first_name} ${user.last_name}`,
+          position: 'Owner',
+          email: user.email
+        }] : prev.keyPersonnel
+      }));
+    }
+  }, [user, onboardingStatus, profile, hasChanges]);
 
   const handleInputChange = (field: string, value: string, section?: string) => {
     setHasChanges(true);

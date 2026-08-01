@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
-import {
+import { Loader2 } from "lucide-react";
+import { 
   Calendar,
   dateFnsLocalizer,
   Views,
@@ -223,6 +224,16 @@ export default function SchedulingPage() {
     };
     return { style };
   };
+
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4 animate-in fade-in duration-500">
+        <Loader2 className="w-12 h-12 text-primary animate-spin" />
+        <p className="text-sm text-foreground/50 font-medium">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground p-6 sm:p-8 md:p-10 lg:p-14">
