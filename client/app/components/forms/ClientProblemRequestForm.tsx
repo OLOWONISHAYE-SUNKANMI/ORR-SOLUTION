@@ -196,6 +196,26 @@ export default function ClientProblemRequestForm() {
   const [savedRequestId, setSavedRequestId] = useState<string>("");
   const [savedPk, setSavedPk] = useState<number | null>(null);
 
+  const [currentStep, setCurrentStep] = useState(1);
+  const totalSteps = 5;
+
+  const handleNextOrSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (currentStep < totalSteps) {
+      setCurrentStep((prev) => prev + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      handleSubmit();
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentStep > 1) {
+      setCurrentStep((prev) => prev - 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
@@ -274,8 +294,8 @@ export default function ClientProblemRequestForm() {
   };
 
   // ── Submit Request ──
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
 
     const payload = formToPayload(formData);
     let pk = savedPk;
@@ -317,7 +337,7 @@ export default function ClientProblemRequestForm() {
         animate={{ opacity: 1, scale: 1 }}
         className="max-w-2xl mx-auto mt-10 p-8 bg-card border border-secondary rounded-2xl shadow-xl text-center"
       >
-        <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mx-auto mb-6">
+        <div className="w-16 h-16 bg-zinc-100 dark:bg-zinc-800/30 text-zinc-900 dark:text-white rounded-full flex items-center justify-center mx-auto mb-6">
           <Send className="w-8 h-8" />
         </div>
         <h2 className="text-2xl font-bold text-foreground mb-4">Request Submitted Successfully!</h2>
@@ -334,7 +354,7 @@ export default function ClientProblemRequestForm() {
             setSavedRequestId("");
             setIsSuccess(false);
           }}
-          className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors"
+          className="px-6 py-3 bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200 text-white font-medium rounded-xl transition-colors"
         >
           Submit Another Request
         </button>
@@ -351,7 +371,7 @@ export default function ClientProblemRequestForm() {
     >
       <div className="p-8 border-b border-secondary bg-secondary/20">
         <h2 className="text-2xl font-bold text-foreground flex items-center gap-2 mb-2">
-          <Briefcase className="w-6 h-6 text-blue-600" />
+          <Briefcase className="w-6 h-6 text-foreground" />
           Client Problem / Request Brief
         </h2>
 
@@ -363,9 +383,36 @@ export default function ClientProblemRequestForm() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="p-8 space-y-6">
+      <form onSubmit={handleNextOrSubmit} className="p-8 space-y-6">
 
-        {/* Request Title */}
+        {/* Step Indicator */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            {[1, 2, 3, 4, 5].map((step) => (
+              <div key={step} className="flex items-center w-full">
+                <div className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center font-medium text-sm transition-colors ${currentStep === step ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900' : currentStep > step ? 'bg-zinc-700 dark:bg-zinc-300 text-white dark:text-zinc-900' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-500'}`}>
+                  {currentStep > step ? '✓' : step}
+                </div>
+                {step < 5 && (
+                  <div className={`w-full h-1 mx-2 sm:mx-4 rounded transition-colors ${currentStep > step ? 'bg-zinc-700 dark:bg-zinc-300' : 'bg-zinc-200 dark:bg-zinc-800'}`} />
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 text-center sm:text-left text-sm font-medium text-foreground opacity-70">
+            Step {currentStep} of 5: {
+              currentStep === 1 ? "Core Info" :
+              currentStep === 2 ? "Problem Context" :
+              currentStep === 3 ? "Scope & Domain" :
+              currentStep === 4 ? "Docs & Comms" :
+              "Declarations"
+            }
+          </div>
+        </div>
+
+        {currentStep === 1 && (
+          <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
+            {/* Request Title */}
         <div className="space-y-2">
           <label className="text-sm font-medium text-foreground opacity-90 flex items-center gap-2">
             <FileText className="w-4 h-4 text-zinc-400" />
@@ -377,7 +424,7 @@ export default function ClientProblemRequestForm() {
             required
             value={formData.requestTitle}
             onChange={handleInputChange}
-            className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+            className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-zinc-900 dark:focus:ring-white focus:border-transparent outline-none transition-all"
             placeholder='Example: "Need help entering the Italian market", "CRM process problem"'
           />
         </div>
@@ -394,7 +441,7 @@ export default function ClientProblemRequestForm() {
               required
               value={formData.mainRequestType}
               onChange={handleInputChange}
-              className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all appearance-none"
+              className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-zinc-900 dark:focus:ring-white focus:border-transparent outline-none transition-all appearance-none"
             >
               <option value="" disabled>Select request type...</option>
               {REQUEST_TYPE_OPTIONS.map((opt) => (
@@ -413,7 +460,7 @@ export default function ClientProblemRequestForm() {
               name="orrServiceArea"
               value={formData.orrServiceArea}
               onChange={handleInputChange}
-              className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all appearance-none"
+              className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-zinc-900 dark:focus:ring-white focus:border-transparent outline-none transition-all appearance-none"
             >
               <option value="" disabled>Select service area...</option>
               {SERVICE_AREA_OPTIONS.map((opt) => (
@@ -434,7 +481,7 @@ export default function ClientProblemRequestForm() {
             value={formData.shortDescription}
             onChange={handleInputChange}
             rows={4}
-            className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none"
+            className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-zinc-900 dark:focus:ring-white focus:border-transparent outline-none transition-all resize-none"
             placeholder="Please provide the core details of your request. This will feed into our AI project summary generation..."
           />
         </div>
@@ -451,11 +498,16 @@ export default function ClientProblemRequestForm() {
             value={formData.desiredOutcome}
             onChange={handleInputChange}
             rows={3}
-            className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none"
+            className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-zinc-900 dark:focus:ring-white focus:border-transparent outline-none transition-all resize-none"
             placeholder="Describe what success looks like (e.g., advice, decision support, implementation, compliance...)"
           />
         </div>
 
+          </motion.div>
+        )}
+
+        {currentStep === 2 && (
+          <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
         {/* --- PROBLEM DETAIL SECTION --- */}
         <div className="pt-2">
           <h3 className="text-lg font-semibold text-foreground mb-4">Problem Detail</h3>
@@ -472,7 +524,7 @@ export default function ClientProblemRequestForm() {
                 value={formData.backgroundContext}
                 onChange={handleInputChange}
                 rows={3}
-                className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none"
+                className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-zinc-900 dark:focus:ring-white focus:border-transparent outline-none transition-all resize-none"
                 placeholder="Background context..."
               />
             </div>
@@ -488,7 +540,7 @@ export default function ClientProblemRequestForm() {
                 value={formData.mainQuestion}
                 onChange={handleInputChange}
                 rows={2}
-                className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none"
+                className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-zinc-900 dark:focus:ring-white focus:border-transparent outline-none transition-all resize-none"
                 placeholder="Your main question..."
               />
             </div>
@@ -504,7 +556,7 @@ export default function ClientProblemRequestForm() {
                 value={formData.currentChallenge}
                 onChange={handleInputChange}
                 rows={2}
-                className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none"
+                className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-zinc-900 dark:focus:ring-white focus:border-transparent outline-none transition-all resize-none"
                 placeholder="What is the bottleneck or challenge..."
               />
             </div>
@@ -521,7 +573,7 @@ export default function ClientProblemRequestForm() {
                   value={formData.actionsTaken}
                   onChange={handleInputChange}
                   rows={3}
-                  className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none"
+                  className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-zinc-900 dark:focus:ring-white focus:border-transparent outline-none transition-all resize-none"
                   placeholder="Previous actions..."
                 />
               </div>
@@ -537,7 +589,7 @@ export default function ClientProblemRequestForm() {
                   value={formData.decisionNeeded}
                   onChange={handleInputChange}
                   rows={3}
-                  className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none"
+                  className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-zinc-900 dark:focus:ring-white focus:border-transparent outline-none transition-all resize-none"
                   placeholder="Required decision..."
                 />
               </div>
@@ -546,6 +598,11 @@ export default function ClientProblemRequestForm() {
           </div>
         </div>
 
+          </motion.div>
+        )}
+
+        {currentStep === 3 && (
+          <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
         {/* --- SCOPE & EXPECTATIONS SECTION --- */}
         <div className="pt-6 border-t border-secondary">
           <h3 className="text-lg font-semibold text-foreground mb-4">Scope & Expectations</h3>
@@ -565,7 +622,7 @@ export default function ClientProblemRequestForm() {
                         type="checkbox"
                         checked={formData.expectedSupport.includes(opt)}
                         onChange={() => handleCheckboxChange("expectedSupport", opt)}
-                        className="w-4 h-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+                        className="w-4 h-4 rounded border-zinc-300 text-zinc-900 dark:text-zinc-100 focus:ring-zinc-900 dark:focus:ring-white"
                       />
                       <span className="text-sm text-foreground opacity-90">{opt}</span>
                     </label>
@@ -586,7 +643,7 @@ export default function ClientProblemRequestForm() {
                         type="checkbox"
                         checked={formData.expectedDeliverable.includes(opt)}
                         onChange={() => handleCheckboxChange("expectedDeliverable", opt)}
-                        className="w-4 h-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+                        className="w-4 h-4 rounded border-zinc-300 text-zinc-900 dark:text-zinc-100 focus:ring-zinc-900 dark:focus:ring-white"
                       />
                       <span className="text-sm text-foreground opacity-90">{opt}</span>
                     </label>
@@ -605,7 +662,7 @@ export default function ClientProblemRequestForm() {
                   name="urgency"
                   value={formData.urgency}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all appearance-none"
+                  className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-zinc-900 dark:focus:ring-white focus:border-transparent outline-none transition-all appearance-none"
                 >
                   <option value="" disabled>Select urgency...</option>
                   {URGENCY_OPTIONS.map((opt) => (
@@ -625,7 +682,7 @@ export default function ClientProblemRequestForm() {
                   name="targetDate"
                   value={formData.targetDate}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                  className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-zinc-900 dark:focus:ring-white focus:border-transparent outline-none transition-all"
                 />
               </div>
 
@@ -639,7 +696,7 @@ export default function ClientProblemRequestForm() {
                   name="budgetExpectation"
                   value={formData.budgetExpectation}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all appearance-none"
+                  className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-zinc-900 dark:focus:ring-white focus:border-transparent outline-none transition-all appearance-none"
                 >
                   <option value="" disabled>Select budget...</option>
                   {BUDGET_OPTIONS.map((opt) => (
@@ -671,7 +728,7 @@ export default function ClientProblemRequestForm() {
                         type="checkbox"
                         checked={formData.sector.includes(opt)}
                         onChange={() => handleCheckboxChange("sector", opt)}
-                        className="w-4 h-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+                        className="w-4 h-4 rounded border-zinc-300 text-zinc-900 dark:text-zinc-100 focus:ring-zinc-900 dark:focus:ring-white"
                       />
                       <span className="text-sm text-foreground opacity-90">{opt}</span>
                     </label>
@@ -691,7 +748,7 @@ export default function ClientProblemRequestForm() {
                     name="jurisdiction"
                     value={formData.jurisdiction}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                    className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-zinc-900 dark:focus:ring-white focus:border-transparent outline-none transition-all"
                     placeholder="e.g. United Kingdom, EU, Global"
                   />
                   <p className="text-xs text-foreground opacity-50 mt-1">
@@ -710,7 +767,7 @@ export default function ClientProblemRequestForm() {
                     name="location"
                     value={formData.location}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                    className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-zinc-900 dark:focus:ring-white focus:border-transparent outline-none transition-all"
                     placeholder="Provide the location of the business, project, land..."
                   />
                 </div>
@@ -720,6 +777,11 @@ export default function ClientProblemRequestForm() {
           </div>
         </div>
 
+          </motion.div>
+        )}
+
+        {currentStep === 4 && (
+          <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
         {/* --- DOCUMENTS SECTION --- */}
         <div className="pt-6 border-t border-secondary">
           <h3 className="text-lg font-semibold text-foreground mb-4">Documents & Vault</h3>
@@ -744,7 +806,7 @@ export default function ClientProblemRequestForm() {
                       checked={formData.hasDocuments}
                       onChange={(e) => setFormData(prev => ({ ...prev, hasDocuments: e.target.checked }))}
                     />
-                    <div className={`block w-10 h-6 rounded-full transition-colors ${formData.hasDocuments ? 'bg-blue-600' : 'bg-zinc-300 dark:bg-zinc-600'}`}></div>
+                    <div className={`block w-10 h-6 rounded-full transition-colors ${formData.hasDocuments ? 'bg-zinc-900 dark:bg-white' : 'bg-zinc-300 dark:bg-zinc-600'}`}></div>
                     <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${formData.hasDocuments ? 'transform translate-x-4' : ''}`}></div>
                   </div>
                   <span className="ml-3 text-sm font-medium text-foreground opacity-90">
@@ -762,7 +824,7 @@ export default function ClientProblemRequestForm() {
                 className="space-y-4"
               >
                 <div className="border-2 border-dashed border-secondary rounded-xl p-6 text-center bg-card/50 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
-                  <div className="mx-auto w-12 h-12 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center mb-3">
+                  <div className="mx-auto w-12 h-12 bg-blue-100 dark:bg-blue-900/30 text-zinc-900 dark:text-zinc-100 dark:text-blue-400 rounded-full flex items-center justify-center mb-3">
                     <Paperclip className="w-6 h-6" />
                   </div>
                   <p className="text-sm font-medium text-foreground mb-1">
@@ -789,7 +851,7 @@ export default function ClientProblemRequestForm() {
                     {formData.documents.map((doc, index) => (
                       <div key={index} className="flex flex-col sm:flex-row gap-3 p-3 bg-card border border-zinc-200 dark:border-zinc-700 rounded-xl items-start sm:items-center">
                         <div className="flex-1 flex items-center gap-3 overflow-hidden">
-                          <FileText className="w-5 h-5 text-blue-500 shrink-0" />
+                          <FileText className="w-5 h-5 text-zinc-900 dark:text-zinc-100 shrink-0" />
                           <span className="text-sm text-foreground opacity-90 truncate font-medium">
                             {doc.file.name}
                           </span>
@@ -800,7 +862,7 @@ export default function ClientProblemRequestForm() {
                             placeholder="Briefly describe this document..."
                             value={doc.description}
                             onChange={(e) => handleDocDescriptionChange(index, e.target.value)}
-                            className="w-full text-sm px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-900 text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                            className="w-full text-sm px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-900 text-foreground focus:ring-2 focus:ring-zinc-900 dark:focus:ring-white focus:border-transparent outline-none"
                           />
                         </div>
                         <button
@@ -838,7 +900,7 @@ export default function ClientProblemRequestForm() {
                         type="checkbox" 
                         checked={formData.preferredContactMethod.includes(opt)}
                         onChange={() => handleCheckboxChange("preferredContactMethod", opt)}
-                        className="w-4 h-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+                        className="w-4 h-4 rounded border-zinc-300 text-zinc-900 dark:text-zinc-100 focus:ring-zinc-900 dark:focus:ring-white"
                       />
                       <span className="text-sm text-foreground opacity-90">{opt}</span>
                     </label>
@@ -859,7 +921,7 @@ export default function ClientProblemRequestForm() {
                         type="checkbox" 
                         checked={formData.preferredMeetingLanguage.includes(opt)}
                         onChange={() => handleCheckboxChange("preferredMeetingLanguage", opt)}
-                        className="w-4 h-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+                        className="w-4 h-4 rounded border-zinc-300 text-zinc-900 dark:text-zinc-100 focus:ring-zinc-900 dark:focus:ring-white"
                       />
                       <span className="text-sm text-foreground opacity-90">{opt}</span>
                     </label>
@@ -878,7 +940,7 @@ export default function ClientProblemRequestForm() {
                 name="preferredNextStep"
                 value={formData.preferredNextStep}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all appearance-none"
+                className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-zinc-900 dark:focus:ring-white focus:border-transparent outline-none transition-all appearance-none"
               >
                 <option value="" disabled>Select preferred next step...</option>
                 {NEXT_STEP_OPTIONS.map((opt) => (
@@ -889,6 +951,11 @@ export default function ClientProblemRequestForm() {
           </div>
         </div>
 
+          </motion.div>
+        )}
+
+        {currentStep === 5 && (
+          <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
         {/* --- CONFIDENTIALITY SECTION --- */}
         <div className="pt-6 border-t border-secondary">
           <h3 className="text-lg font-semibold text-foreground mb-4">Confidentiality</h3>
@@ -905,7 +972,7 @@ export default function ClientProblemRequestForm() {
                   required
                   value={formData.sensitivityLevel}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all appearance-none"
+                  className="w-full px-4 py-3 rounded-xl border border-secondary bg-card text-foreground focus:ring-2 focus:ring-zinc-900 dark:focus:ring-white focus:border-transparent outline-none transition-all appearance-none"
                 >
                   <option value="" disabled>Select sensitivity level...</option>
                   {SENSITIVITY_OPTIONS.map((opt) => (
@@ -922,7 +989,7 @@ export default function ClientProblemRequestForm() {
                     required
                     checked={formData.confidentialityAgreed}
                     onChange={(e) => setFormData(prev => ({ ...prev, confidentialityAgreed: e.target.checked }))}
-                    className="w-5 h-5 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+                    className="w-5 h-5 rounded border-zinc-300 text-zinc-900 dark:text-zinc-100 focus:ring-zinc-900 dark:focus:ring-white"
                   />
                 </div>
                 <div className="flex-1">
@@ -951,7 +1018,7 @@ export default function ClientProblemRequestForm() {
                   required
                   checked={formData.confirmAccuracy}
                   onChange={(e) => setFormData(prev => ({ ...prev, confirmAccuracy: e.target.checked }))}
-                  className="w-5 h-5 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+                  className="w-5 h-5 rounded border-zinc-300 text-zinc-900 dark:text-zinc-100 focus:ring-zinc-900 dark:focus:ring-white"
                 />
               </div>
               <div className="flex-1">
@@ -971,7 +1038,7 @@ export default function ClientProblemRequestForm() {
                   type="checkbox" 
                   checked={formData.confirmAuthority}
                   onChange={(e) => setFormData(prev => ({ ...prev, confirmAuthority: e.target.checked }))}
-                  className="w-5 h-5 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+                  className="w-5 h-5 rounded border-zinc-300 text-zinc-900 dark:text-zinc-100 focus:ring-zinc-900 dark:focus:ring-white"
                 />
               </div>
               <div className="flex-1">
@@ -991,7 +1058,7 @@ export default function ClientProblemRequestForm() {
                   type="checkbox" 
                   checked={formData.confirmNoEmergency}
                   onChange={(e) => setFormData(prev => ({ ...prev, confirmNoEmergency: e.target.checked }))}
-                  className="w-5 h-5 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+                  className="w-5 h-5 rounded border-zinc-300 text-zinc-900 dark:text-zinc-100 focus:ring-zinc-900 dark:focus:ring-white"
                 />
               </div>
               <div className="flex-1">
@@ -1011,7 +1078,7 @@ export default function ClientProblemRequestForm() {
                   type="checkbox" 
                   checked={formData.aiProcessingNotice}
                   onChange={(e) => setFormData(prev => ({ ...prev, aiProcessingNotice: e.target.checked }))}
-                  className="w-5 h-5 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+                  className="w-5 h-5 rounded border-zinc-300 text-zinc-900 dark:text-zinc-100 focus:ring-zinc-900 dark:focus:ring-white"
                 />
               </div>
               <div className="flex-1">
@@ -1026,8 +1093,21 @@ export default function ClientProblemRequestForm() {
           </div>
         </div>
 
+          </motion.div>
+        )}
+
         {/* Submit Buttons */}
-        <div className="pt-4 flex flex-col sm:flex-row gap-4">
+        <div className="pt-4 flex flex-col sm:flex-row gap-4 border-t border-secondary mt-8">
+          {currentStep > 1 && (
+            <button
+              type="button"
+              onClick={handlePrev}
+              disabled={isSubmitting}
+              className="flex-1 py-4 rounded-xl font-medium text-lg flex items-center justify-center gap-2 transition-all border-2 border-zinc-300 text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            >
+              Back
+            </button>
+          )}
           <button
             type="button"
             onClick={handleSaveDraft}
@@ -1045,8 +1125,8 @@ export default function ClientProblemRequestForm() {
             type="submit"
             disabled={isSubmitting}
             className={`flex-[2] py-4 rounded-xl text-white font-medium text-lg flex items-center justify-center gap-2 transition-all ${isSubmitting
-                ? "bg-blue-400 dark:bg-blue-800 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/30"
+                ? "bg-zinc-400 dark:bg-zinc-800 dark:text-zinc-500 cursor-not-allowed"
+                : "bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 dark:text-zinc-900 shadow-lg shadow-zinc-500/10"
               }`}
           >
             {isSubmitting ? (
@@ -1055,12 +1135,12 @@ export default function ClientProblemRequestForm() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Submitting Request...
+                {currentStep < totalSteps ? "Processing..." : "Submitting Request..."}
               </span>
             ) : (
               <>
                 <Send className="w-5 h-5" />
-                Submit Problem Brief
+                {currentStep < totalSteps ? "Next Step" : "Submit Problem Brief"}
               </>
             )}
           </button>
