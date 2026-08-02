@@ -199,7 +199,8 @@ export default function Sidebar() {
                   subItems: [
                     { label: interpolate(t.dashboard.sidebar.items.faqs), href: "/faq" },
                     { label: interpolate(t.dashboard.sidebar.items.requestSupport), href: "/support" },
-                    { label: interpolate(t.dashboard.sidebar.items.supportHistory), href: "/support-history" }
+                    { label: interpolate(t.dashboard.sidebar.items.supportHistory), href: "/support-history" },
+                    { label: "Technical Feedback", href: "/support/feedback" }
                   ]
                 }
               ]}
