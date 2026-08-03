@@ -1,4 +1,9 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
+import CreateUserModal from "./CreateUserModal";
+import UserManagementTable from "./UserManagementTable";
 
 const tableData = [
   {
@@ -25,7 +30,10 @@ const categories = [
   "Business",
   "Entertainment",
 ];
-function page() {
+
+export default function SettingsPage() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   return (
     <div>
       <div className="min-h-screen text-white relative overflow-hidden star">
@@ -33,7 +41,15 @@ function page() {
 
         <div className="relative z-10 p-8">
           <div className="bg-card backdrop-blur-sm rounded-2xl p-6 flex flex-col gap-8">
-            <h1 className="text-4xl font-bold text-white">Settings</h1>
+            <div className="flex items-center justify-between">
+              <h1 className="text-4xl font-bold text-white">Settings</h1>
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="px-4 py-2 text-white bg-primary hover:bg-primary/90 rounded-lg transition-colors"
+              >
+                + Add Platform User
+              </button>
+            </div>
 
             <form action="" className="flex flex-col gap-6">
               <h2 className="text-2xl font-semibold text-white">General</h2>
@@ -57,36 +73,9 @@ function page() {
               </div>
 
               <h2 className="text-2xl font-semibold text-white">
-                User roles & permissions
+                Platform Users
               </h2>
-              <div className="overflow-x-auto border  rounded-2xl">
-                <table className="w-full">
-                  <thead className="border-b">
-                    <tr>
-                      <th className="text-left p-3">Role</th>
-                      <th className="text-left p-3">Permissions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="space-y-4 bg-background">
-                    {tableData.map((row, index) => (
-                      <tr key={index} className="border-b">
-                        <td className="py-5 px-4">
-                          <div className="flex items-center gap-3">
-                            <span className="text-white">{row.role}</span>
-                          </div>
-                        </td>
-                        <td className="py-5 px-4">
-                          <div className="text-white">
-                            <span className="text-white/70">
-                              {row.permissions}
-                            </span>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <UserManagementTable />
 
               <h2 className="text-2xl font-semibold text-white">
                 Integrations
@@ -119,8 +108,7 @@ function page() {
           </div>
         </div>
       </div>
+      <CreateUserModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   );
 }
-
-export default page;

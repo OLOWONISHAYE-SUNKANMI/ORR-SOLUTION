@@ -4,6 +4,7 @@ import { ThemeProvider } from "./components/ThemeProvider";
 import { LanguageProvider } from "@/lib/i18n/LanguageContext";
 import { ToastContainer } from "./components/Toast";
 import TrailingSlashRedirect from "../components/TrailingSlashRedirect";
+import Chatbot from "@/components/shared/Chatbot";
 
 const geistSans = {
   variable: "",
@@ -139,6 +140,7 @@ export default function RootLayout({
           <LanguageProvider>
             {children}
             <ToastContainer />
+            <Chatbot />
           </LanguageProvider>
         </ThemeProvider>
       </body>

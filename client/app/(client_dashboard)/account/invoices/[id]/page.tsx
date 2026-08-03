@@ -1,16 +1,6 @@
 import React from 'react';
 import InvoiceDetailClient from './InvoiceDetailClient';
 
-export const dynamic = 'force-static';
-export const dynamicParams = false;
-
-export function generateStaticParams() {
-  return [
-    { id: 'inv_1' },
-    { id: 'inv_2' },
-    { id: 'inv_3' },
-  ];
-}
 
 interface PageProps {
   params: Promise<{ id: string }>;

@@ -9,6 +9,7 @@ import {
   Settings2,
   Calendar,
   Users,
+  MessageSquare,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ForwardRefExoticComponent, RefAttributes, useState } from "react";
@@ -71,6 +72,12 @@ const navigationItems: ItemType[] = [
     label: "Document Vault",
     active: false,
     value: "vault",
+  },
+  {
+    icon: MessageSquare,
+    label: "Feedback",
+    active: false,
+    value: "feedback",
   },
 ];
 

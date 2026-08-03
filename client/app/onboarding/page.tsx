@@ -246,6 +246,11 @@ const getQuestionnaire = (t: any, interpolate: any) => ({
         type: "text",
         options: [] as string[],
         placeholder: interpolate(t?.onboarding?.typeMessage || 'Type your message here...')
+      },
+      {
+        question: interpolate(t?.onboarding?.s6?.q2 || "17. Preferred AI Persona:"),
+        options: ["Direct & Concise", "Scientific/Technical", "Friendly/Conversational", "Strategic & Formal"],
+        type: "single"
       }
     ]
   }
@@ -450,6 +455,14 @@ export default function OnboardingPage() {
       ai_specialist_domains: [],
       ai_specialist_other: undefined,
       additional_context: finalAnswers['6-0'] || '',
+      ai_preference: (() => {
+        const val = finalAnswers['6-1'];
+        if (val?.includes('Concise')) return 'concise';
+        if (val?.includes('Scientific')) return 'scientific';
+        if (val?.includes('Friendly')) return 'friendly';
+        if (val?.includes('Professional')) return 'professional';
+        return 'concise';
+      })(),
     };
 
     // Before submit, clean up translations from answers if necessary

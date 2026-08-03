@@ -19,10 +19,33 @@ export const adminVaultApi = {
       : '/admin-portal/v1/vault/documents/';
     const response = await axiosInstance.get(url);
     let data = response.data?.data || response.data;
+    
+    // Support pagination or direct array
     if (data && !Array.isArray(data) && Array.isArray(data.data)) {
       data = data.data;
+    } else if (data && !Array.isArray(data) && Array.isArray(data.results)) {
+      data = data.results;
     }
-    return Array.isArray(data) ? data : [];
+    
+    if (!Array.isArray(data)) return [];
+
+    return data.map((d: any) => {
+      let formattedDate = 'Unknown Date';
+      try {
+        const rawDate = d.updated_at || d.created_at;
+        if (rawDate) {
+          formattedDate = new Date(rawDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+      } catch (e) {}
+
+      return {
+        ...d,
+        name: d.title || d.name || 'Untitled',
+        lastModified: formattedDate,
+        size: d.file_size || '0 KB',
+        type: normalizeDocType(d),
+      };
+    });
   },
 
   getDocument: async (id: string): Promise<VaultDocument> => {
