@@ -29,6 +29,7 @@ interface OnboardingData {
   ai_specialist_domains?: string[];
   ai_specialist_other?: string;
   additional_context?: string;
+  ai_preference?: string;
 }
 
 interface OnboardingStatus {
@@ -62,6 +63,8 @@ interface OnboardingStatus {
   ai_specialist_domains?: string;
   ai_specialist_other?: string;
   additional_context?: string;
+  ai_preference?: string;
+  ai_preference?: string;
   user?: number;
 }
 
