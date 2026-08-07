@@ -22,7 +22,7 @@ interface Post {
   badge: any;
   mainImage: any;
   featured: boolean;
-  publishedAt: string;
+  publishDate: string;
   body: any;
   button1Text?: any;
   button2Text?: any;
@@ -210,10 +210,15 @@ function FeaturedCardComponent({ post }: { post: Post }) {
             alt={title}
             className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700 ease-out"
           />
-          <div className="absolute top-6 left-6 z-20">
-            <span className="bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-bold px-4 py-2 rounded-full uppercase tracking-wider shadow-xl">
+          <div className="absolute top-6 left-6 z-20 flex flex-col gap-2">
+            <span className="w-fit bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-bold px-4 py-2 rounded-full uppercase tracking-wider shadow-xl">
               {badge || t.resources.featured}
             </span>
+            {post.publishDate && (
+              <span className="w-fit bg-black/50 backdrop-blur-md text-white/90 text-xs font-medium px-3 py-1 rounded-full shadow-md">
+                {new Date(post.publishDate).toLocaleDateString(language === 'it' ? 'it-IT' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+              </span>
+            )}
           </div>
         </div>
 

@@ -64,7 +64,6 @@ interface OnboardingStatus {
   ai_specialist_other?: string;
   additional_context?: string;
   ai_preference?: string;
-  ai_preference?: string;
   user?: number;
 }
 

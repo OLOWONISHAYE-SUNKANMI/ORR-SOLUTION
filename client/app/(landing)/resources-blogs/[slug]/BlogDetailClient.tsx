@@ -14,7 +14,7 @@ interface Post {
   slug: string;
   badge: any;
   mainImage: any;
-  publishedAt: string;
+  publishDate: string;
   body: any;
   button1Text?: any;
   button2Text?: any;
@@ -76,13 +76,18 @@ export default function BlogDetailClient({ post }: { post: Post }) {
         <article className="max-w-4xl mx-auto">
           <header ref={headerRef} className="text-center mb-16">
             {badge && (
-              <span className="inline-block bg-green-400/10 text-green-400 text-xs font-black px-4 py-2 rounded-full uppercase tracking-[0.2em] mb-8 border border-green-400/20">
+              <span className="inline-block bg-green-400/10 text-green-400 text-xs font-black px-4 py-2 rounded-full uppercase tracking-[0.2em] mb-4 border border-green-400/20">
                 {badge}
               </span>
             )}
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-black mb-12 leading-[1.1] tracking-tighter">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-black mb-8 leading-[1.1] tracking-tighter">
               {title}
             </h1>
+            {post.publishDate && (
+              <p className="text-sm text-gray-400 font-medium tracking-widest uppercase mb-12">
+                Published on {new Date(post.publishDate).toLocaleDateString(language === 'it' ? 'it-IT' : 'en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+              </p>
+            )}
           </header>
 
           <div ref={imageRef} className="relative aspect-[21/9] rounded-[2.5rem] overflow-hidden mb-20 border border-white/10 shadow-2xl">

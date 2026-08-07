@@ -1,7 +1,7 @@
 import { groq } from "next-sanity";
 
 // Blogs & Resources Queries
-export const postsQuery = groq`*[_type == "post"] | order(publishedAt desc) {
+export const postsQuery = groq`*[_type == "post"] | order(publishDate desc) {
   _id,
   title,
   "slug": slug.current,
@@ -11,7 +11,7 @@ export const postsQuery = groq`*[_type == "post"] | order(publishedAt desc) {
   tags,
   readingTime,
   featured,
-  publishedAt,
+  publishDate,
   body,
   button1Text,
   button2Text,
@@ -35,7 +35,7 @@ export const postBySlugQuery = groq`*[_type == "post" && slug.current == $slug][
   tags,
   readingTime,
   featured,
-  publishedAt,
+  publishDate,
   body,
   button1Text,
   button2Text,

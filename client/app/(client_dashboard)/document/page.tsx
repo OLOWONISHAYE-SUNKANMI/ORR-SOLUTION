@@ -587,7 +587,15 @@ export default function DocumentWorkspace() {
       {/* Control Bar */}
       <div className="bg-card/50 backdrop-blur-xl border border-white/10 rounded-[2rem] p-4 mb-8 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4 flex-1 min-w-[200px]">
-          <div className="relative flex-1">
+          <form 
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (searchQuery.trim()) {
+                window.location.href = `/document/search?q=${encodeURIComponent(searchQuery)}`;
+              }
+            }} 
+            className="relative flex-1"
+          >
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" size={18} />
             <input 
               type="text" 
@@ -596,7 +604,7 @@ export default function DocumentWorkspace() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-12 pr-4 text-white text-sm focus:border-primary/50 outline-none transition-all"
             />
-          </div>
+          </form>
           <button className="p-2.5 bg-white/5 border border-white/10 rounded-xl text-white/60 hover:text-white transition-colors">
             <Filter size={18} />
           </button>

@@ -72,8 +72,8 @@ export const post = defineType({
       initialValue: false,
     }),
     defineField({
-      name: 'publishedAt',
-      title: 'Published at',
+      name: 'publishDate',
+      title: 'Publish Date',
       type: 'datetime',
       initialValue: () => new Date().toISOString(),
     }),
