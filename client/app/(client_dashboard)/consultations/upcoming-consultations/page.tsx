@@ -1,5 +1,5 @@
 "use client";
-import { Loader2 } from "lucide-react";
+import { Loader2, Calendar as CalendarIcon, Clock, ExternalLink, X } from "lucide-react";
 
 import React, { useEffect, useState } from "react";
 import GoogleCalendarView from "@/app/components/ui/GoogleCalendarView";
@@ -15,10 +15,10 @@ type EventItem = {
   start: Date;
   end: Date;
   allDay?: boolean;
-  resource?: { color: string; meetingLink?: string };
+  resource?: { color: string; meetingLink?: string; agenda?: string; status?: string };
 };
 
-function EventSidebar({ items, isLoading }: { items: EventItem[]; isLoading: boolean }) {
+function EventSidebar({ items, isLoading, onSelect }: { items: EventItem[]; isLoading: boolean; onSelect: (item: EventItem) => void }) {
   const { t, language } = useLanguage();
   return (
     <div className="h-full">
@@ -39,7 +39,11 @@ function EventSidebar({ items, isLoading }: { items: EventItem[]; isLoading: boo
             </div>
           ) : (
             items.map((item) => (
-              <div key={item.id} className="bg-background/40 backdrop-blur-sm rounded-lg p-3 flex gap-3 items-start border border-white/5 hover:border-primary/30 transition-colors cursor-pointer group">
+              <div 
+                key={item.id} 
+                onClick={() => onSelect(item)}
+                className="bg-background/40 backdrop-blur-sm rounded-lg p-3 flex gap-3 items-start border border-white/5 hover:border-primary/50 hover:bg-white/5 transition-all cursor-pointer group active:scale-[0.99]"
+              >
                 <div className="flex-1">
                   <div className="flex justify-between items-start">
                     <div>
@@ -87,7 +91,7 @@ export default function SchedulingPage() {
       title: `${meeting.meeting_type.replace('_', ' ')} - ${meeting.agenda?.substring(0, 30) || 'Meeting'}...`,
       start: startDate,
       end: endDate,
-      resource: { color: "#0ec277", meetingLink: meeting.meeting_link }
+      resource: { color: "#0ec277", meetingLink: meeting.meeting_link, agenda: meeting.agenda, status: meeting.status }
     };
   });
 
@@ -101,7 +105,7 @@ export default function SchedulingPage() {
       title: `${meeting.meeting_type.replace('_', ' ')} - ${meeting.agenda?.substring(0, 30) || 'Meeting'}...`,
       start: startDate,
       end: endDate,
-      resource: { color: "#0ec277", meetingLink: meeting.meeting_link }
+      resource: { color: "#0ec277", meetingLink: meeting.meeting_link, agenda: meeting.agenda, status: meeting.status }
     };
   });
 
@@ -144,7 +148,7 @@ export default function SchedulingPage() {
 
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 h-auto lg:h-[calc(100vh-250px)]">
           <aside className="w-full lg:w-80 xl:w-96 flex-shrink-0 h-full">
-            <EventSidebar items={allEvents} isLoading={isLoading} />
+            <EventSidebar items={allEvents} isLoading={isLoading} onSelect={(item) => setSelectedEvent(item)} />
           </aside>
 
           <main className="flex-1 h-full min-h-[400px] md:min-h-[600px]">
@@ -156,34 +160,68 @@ export default function SchedulingPage() {
         </div>
       </div>
 
-      {/* Floating Join Button if an event is selected */}
+      {/* Meeting Details Modal */}
       {selectedEvent && (
-        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300">
-          <div className="bg-white/10 backdrop-blur-xl border border-primary/30 p-4 rounded-2xl shadow-2xl flex items-center gap-6 pr-6">
-            <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center text-white font-bold text-xl">
-              {selectedEvent.title.charAt(0)}
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-[#18181b] border border-white/10 rounded-2xl max-w-lg w-full p-6 space-y-6 shadow-2xl relative">
+            <button 
+              onClick={() => setSelectedEvent(null)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white p-2 rounded-full hover:bg-white/10 transition-colors"
+            >
+              <X size={20} />
+            </button>
+
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center text-primary font-bold text-xl">
+                <CalendarIcon size={24} />
+              </div>
+              <div>
+                <span className="text-xs uppercase tracking-wider font-semibold text-primary">Scheduled Meeting</span>
+                <h2 className="text-xl font-bold text-white leading-tight">{selectedEvent.title}</h2>
+              </div>
             </div>
-            <div>
-              <h4 className="text-sm font-semibold text-white">{selectedEvent.title}</h4>
-              <p className="text-xs text-gray-400">Starting at {format(selectedEvent.start, "HH:mm")}</p>
+
+            <div className="space-y-3 bg-white/5 border border-white/5 p-4 rounded-xl text-sm">
+              <div className="flex items-center gap-3 text-gray-300">
+                <Clock className="text-primary flex-shrink-0" size={16} />
+                <span>{format(selectedEvent.start, "EEEE, MMMM d, yyyy")} ⋅ {format(selectedEvent.start, "HH:mm")} - {format(selectedEvent.end, "HH:mm")}</span>
+              </div>
+              {selectedEvent.resource?.agenda && (
+                <div className="pt-2 border-t border-white/10 text-gray-400 text-xs leading-relaxed">
+                  <strong className="text-gray-200 block mb-1">Agenda / Details:</strong>
+                  {selectedEvent.resource.agenda}
+                </div>
+              )}
             </div>
-            {selectedEvent.resource?.meetingLink && selectedEvent.resource.meetingLink !== 'pending-google-workspace' ? (
-              <a 
-                href={selectedEvent.resource.meetingLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-full text-sm font-bold transition-all shadow-lg shadow-primary/20"
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button 
+                onClick={() => setSelectedEvent(null)}
+                className="px-5 py-2.5 rounded-full text-xs font-semibold text-gray-300 hover:bg-white/10 transition-colors"
               >
-                Join Meet
-              </a>
-            ) : (
-              <a 
-                href={`/consultations/meeting/${selectedEvent.id}`}
-                className="bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-full text-sm font-bold transition-all shadow-lg shadow-primary/20"
-              >
-                Join Meet
-              </a>
-            )}
+                Close
+              </button>
+
+              {selectedEvent.resource?.meetingLink && selectedEvent.resource.meetingLink !== 'pending-google-workspace' ? (
+                <a 
+                  href={selectedEvent.resource.meetingLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-primary hover:bg-primary/90 text-black px-6 py-2.5 rounded-full text-sm font-bold transition-all flex items-center gap-2 shadow-lg shadow-primary/20"
+                >
+                  Join Google Meet
+                  <ExternalLink size={14} />
+                </a>
+              ) : (
+                <a 
+                  href={`/consultations/meeting/${selectedEvent.id}`}
+                  className="bg-primary hover:bg-primary/90 text-black px-6 py-2.5 rounded-full text-sm font-bold transition-all flex items-center gap-2 shadow-lg shadow-primary/20"
+                >
+                  Join Session
+                  <ExternalLink size={14} />
+                </a>
+              )}
+            </div>
           </div>
         </div>
       )}

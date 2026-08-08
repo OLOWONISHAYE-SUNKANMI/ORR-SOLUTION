@@ -127,6 +127,7 @@ export default function Sidebar() {
                     { label: "My Requests", href: "/problem-request/history" }
                   ]
                 },
+                { label: "Projects", href: "/projects" },
                 { label: interpolate(t.dashboard.sidebar.items.analytics), href: "/analytics" }
               ]}
               pathname={pathname}

@@ -12,7 +12,7 @@ interface Post {
   slug: string;
   badge: any;
   mainImage: any;
-  publishedAt: string;
+  publishDate: string;
   body: any;
 }
 
@@ -44,10 +44,15 @@ export default function BlogCard({ post, className = "" }: BlogCardProps) {
         </div>
 
         <div className="flex flex-col flex-grow">
-          <div className="mb-4">
+          <div className="mb-4 flex justify-between items-center">
             {badge && (
               <span className="inline-block bg-white/10 text-white/90 text-xs font-semibold px-3 py-1.5 rounded-full backdrop-blur-sm border border-white/10 group-hover:bg-green-400 group-hover:text-black group-hover:border-green-400 transition-colors duration-300">
                 {badge}
+              </span>
+            )}
+            {post.publishDate && (
+              <span className="text-gray-400 text-xs font-medium">
+                {new Date(post.publishDate).toLocaleDateString(language === 'it' ? 'it-IT' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
               </span>
             )}
           </div>

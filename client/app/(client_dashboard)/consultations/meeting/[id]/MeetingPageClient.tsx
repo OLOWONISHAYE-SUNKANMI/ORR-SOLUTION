@@ -20,6 +20,15 @@ export default function MeetingPageClient({ meetingId }: MeetingPageClientProps)
   const [meeting, setMeeting] = useState<Meeting | null>(null);
 
   useEffect(() => {
+    if (meetingId === 'instant-session') {
+      setMeeting({
+        id: 0,
+        title: "Instant Consultation Session",
+        meeting_link: "pending-google-workspace"
+      });
+      return;
+    }
+
     const fetchMeeting = async () => {
       try {
         const response = await axios.get(`/meetings/${meetingId}/`);
