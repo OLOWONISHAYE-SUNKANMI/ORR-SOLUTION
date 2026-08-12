@@ -3,12 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Calendar, Clock, User, FileText, Star, 
-  Search, Filter, Link as LinkIcon, Loader2, 
+  Search, Filter, Link as LinkIcon,
   ChevronRight, MoreVertical, Download, Mail,
   X, CheckCircle2, AlertCircle, CalendarDays
 } from 'lucide-react';
 import Link from 'next/link';
 import { useLanguage, interpolate } from '@/lib/i18n/LanguageContext';
+import { SkeletonCardGrid } from '@/components/ui/SkeletonPresets';
 
 interface PastConsultation {
   id: number;
@@ -218,10 +219,7 @@ export default function PastConsultationsPage() {
 
         {/* Main Content Area */}
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-32 animate-pulse">
-            <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
-            <p className="text-gray-400 text-sm font-medium tracking-widest uppercase">Loading History...</p>
-          </div>
+          <SkeletonCardGrid count={6} />
         ) : error ? (
           <div className="text-center py-20 bg-red-500/5 rounded-3xl border border-red-500/10 max-w-xl mx-auto">
             <AlertCircle size={48} className="text-red-400 mx-auto mb-4" />

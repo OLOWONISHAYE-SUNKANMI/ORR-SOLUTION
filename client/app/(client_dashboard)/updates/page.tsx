@@ -1,9 +1,11 @@
 "use client";
 
-import { Loader2, Search, X, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, X, ChevronDown, ChevronUp } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useNotificationStore } from "@/store/notificationStore";
 import { useLanguage, interpolate } from "@/lib/i18n/LanguageContext";
+import Skeleton from "@/components/ui/Skeleton";
+import { SkeletonList } from "@/components/ui/SkeletonPresets";
 
 export default function NotificationPage() {
   const { t, language: currentLang } = useLanguage();
@@ -28,9 +30,12 @@ export default function NotificationPage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4 animate-in fade-in duration-500">
-        <Loader2 className="w-12 h-12 text-primary animate-spin" />
-        <p className="text-sm text-foreground/50 font-medium">Loading...</p>
+      <div className="min-h-screen w-full bg-background text-foreground font-poppins px-6 md:px-20 pt-10">
+        <Skeleton className="h-8 w-64 mb-8" />
+        <div className="w-[90%] mx-auto mt-6 rounded-[40px] border-[6px] border-secondary bg-card p-10">
+          <Skeleton className="h-6 w-48 mb-6" />
+          <SkeletonList rows={5} />
+        </div>
       </div>
     );
   }

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import api from "@/lib/axios";
 import { useToastStore } from "@/store/toastStore";
 import { Loader2, Trash2 } from "lucide-react";
+import { SkeletonTable } from "@/components/ui/SkeletonPresets";
 
 interface PlatformUser {
   id: number;
@@ -61,7 +62,7 @@ export default function UserManagementTable() {
   };
 
   if (isLoading) {
-    return <div className="flex justify-center p-4"><Loader2 className="w-6 h-6 animate-spin" /></div>;
+    return <SkeletonTable rows={6} cols={5} />;
   }
 
   return (

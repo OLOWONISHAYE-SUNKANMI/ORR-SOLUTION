@@ -1,11 +1,13 @@
 "use client";
-import { Loader2, Calendar as CalendarIcon, Clock, ExternalLink, X } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, ExternalLink, X } from "lucide-react";
 
 import React, { useEffect, useState } from "react";
 import GoogleCalendarView from "@/app/components/ui/GoogleCalendarView";
 import { format } from "date-fns";
 import { it, enUS } from "date-fns/locale";
 import { CalendarCog, Search } from "lucide-react";
+import Skeleton from "@/components/ui/Skeleton";
+import { SkeletonList } from "@/components/ui/SkeletonPresets";
 import { useMeetingStore } from "@/store/meetingStore";
 import { useLanguage, interpolate } from "@/lib/i18n/LanguageContext";
 
@@ -112,9 +114,21 @@ export default function SchedulingPage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4 animate-in fade-in duration-500">
-        <Loader2 className="w-12 h-12 text-primary animate-spin" />
-        <p className="text-sm text-foreground/50 font-medium">Loading...</p>
+      <div className="min-h-screen bg-background text-foreground p-4 sm:p-6 md:p-10 lg:p-14">
+        <div className="mx-auto max-w-[1600px]">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
+            <Skeleton className="h-9 w-72" />
+            <Skeleton className="h-11 w-64 rounded-full" />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-1">
+              <SkeletonList rows={5} />
+            </div>
+            <div className="lg:col-span-2">
+              <Skeleton className="h-[500px] w-full rounded-2xl" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

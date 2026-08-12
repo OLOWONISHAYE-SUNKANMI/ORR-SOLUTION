@@ -1,5 +1,4 @@
 "use client";
-import { Loader2 } from "lucide-react";
 import clsx from 'clsx';
 
 import React, { useEffect, useState, useRef } from "react";
@@ -15,6 +14,7 @@ import { useAuthStore } from '@/store/authStore';
 import api from '@/lib/axios';
 import { useLanguage } from '@/app/components/LanguageProvider';
 import Skeleton from '@/components/ui/Skeleton';
+import { DashboardSkeleton } from '@/components/ui/SkeletonPresets';
 
 interface StatCardProps {
   icon: React.ReactNode;
@@ -114,12 +114,7 @@ export default function Dashboard() {
 
 
   if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4 animate-in fade-in duration-500">
-        <Loader2 className="w-12 h-12 text-primary animate-spin" />
-        <p className="text-sm text-foreground/50 font-medium">Loading...</p>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   return (

@@ -1,6 +1,4 @@
 "use client";
-import { Loader2 } from "lucide-react";
-
 import React, { useEffect } from "react";
 import { useRequestStore } from "@/store/requestStore";
 import { format } from "date-fns";
@@ -48,15 +46,6 @@ export default function MyRequestsPage() {
     }
   };
 
-
-  if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4 animate-in fade-in duration-500">
-        <Loader2 className="w-12 h-12 text-primary animate-spin" />
-        <p className="text-sm text-foreground/50 font-medium">Loading...</p>
-      </div>
-    );
-  }
 
   return (
     <main className="min-h-full p-4 md:p-6 bg-background">

@@ -2,10 +2,11 @@
 
 import React, { useEffect } from "react";
 import { useProjectStore } from "@/store/projectStore";
-import { Folder, Clock, CheckCircle, ArrowRight, Loader2 } from "lucide-react";
+import { Folder, Clock, CheckCircle, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import clsx from "clsx";
 import Skeleton from "@/components/ui/Skeleton";
+import { SkeletonCardGrid } from "@/components/ui/SkeletonPresets";
 import { useLanguage } from "@/app/components/LanguageProvider";
 
 export default function ClientProjectsPage() {
@@ -25,9 +26,7 @@ export default function ClientProjectsPage() {
         </header>
 
         {isLoading ? (
-          <div className="flex justify-center py-20">
-            <Loader2 className="w-10 h-10 animate-spin text-primary" />
-          </div>
+          <SkeletonCardGrid />
         ) : projects.length === 0 ? (
           <div className="bg-card border border-white/10 rounded-2xl p-12 flex flex-col items-center justify-center text-center">
             <Folder className="w-16 h-16 text-white/20 mb-4" />

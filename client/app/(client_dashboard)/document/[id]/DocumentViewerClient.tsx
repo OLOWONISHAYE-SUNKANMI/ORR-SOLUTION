@@ -521,7 +521,7 @@ export default function DocumentViewerClient({ id }: { id: string }) {
  
     let finalUrl = link;
     if (isOffice && !isGoogleNative && link) {
-      finalUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(link)}&embedded=true`;
+      finalUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(link)}`;
     }
  
     switch (normalizedType) {

@@ -1,9 +1,9 @@
 "use client";
-import { Loader2 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { useProfileStore } from "@/store/profileStore";
 import { useAuthStore } from "@/store/authStore";
 import { useLanguage, interpolate } from "@/lib/i18n/LanguageContext";
+import Skeleton from "@/components/ui/Skeleton";
 
 interface Country {
   name: { common: string };
@@ -84,9 +84,28 @@ export default function AccountSettingsPage() {
 
   if (loadingCountries) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4 animate-in fade-in duration-500">
-        <Loader2 className="w-12 h-12 text-primary animate-spin" />
-        <p className="text-sm text-foreground/50 font-medium">Loading...</p>
+      <div className="min-h-screen w-full bg-background text-white px-4 sm:px-6 lg:px-12 py-4 sm:py-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4 mb-6">
+            <Skeleton className="h-9 w-64" />
+            <Skeleton className="h-11 w-full lg:w-80 rounded-full" />
+          </div>
+          <div className="flex items-center gap-4 mb-8">
+            <Skeleton variant="circle" width={80} height={80} />
+            <div className="flex flex-col gap-2">
+              <Skeleton className="h-5 w-40" />
+              <Skeleton className="h-4 w-56" />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="flex flex-col gap-2">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-11 w-full rounded-lg" />
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }

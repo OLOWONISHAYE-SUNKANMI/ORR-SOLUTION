@@ -13,12 +13,13 @@ import {
   Filter,
   Calendar,
   FileText,
-  Clock,
-  Loader2
+  Clock
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { clsx } from 'clsx';
 import { vaultApi, ActivityLogEntry } from '@/lib/vault-api';
+import Skeleton from '@/components/ui/Skeleton';
+import { SkeletonList } from '@/components/ui/SkeletonPresets';
 
 const ACTION_ICONS: any = {
   'Create': Edit3,
@@ -127,9 +128,7 @@ export default function ActivityLog() {
       {/* Activity Timeline */}
       <div className="space-y-4">
         {isLoading ? (
-          <div className="flex justify-center py-20">
-            <Loader2 className="w-10 h-10 animate-spin text-primary" />
-          </div>
+          <SkeletonList rows={5} />
         ) : filteredActivity.length === 0 ? (
           <div className="text-center py-20 bg-card/10 border border-dashed border-white/10 rounded-[3rem]">
              <History className="w-16 h-16 text-white/10 mx-auto mb-4" />

@@ -12,6 +12,7 @@ import {
   Loader2,
 } from "lucide-react";
 import api from "@/lib/axios";
+import { SkeletonList } from "@/components/ui/SkeletonPresets";
 
 interface Message {
   id: string;
@@ -184,10 +185,7 @@ export default function AIAssistantPage() {
         <div className="max-w-3xl mx-auto space-y-6">
           {/* Welcome State */}
           {isFetchingHistory ? (
-            <div className="flex flex-col items-center justify-center py-20 space-y-4 animate-in fade-in duration-500">
-              <Loader2 className="w-10 h-10 text-primary animate-spin" />
-              <p className="text-sm text-foreground/50 font-medium">Loading conversation...</p>
-            </div>
+            <SkeletonList rows={4} className="py-6" />
           ) : messages.length === 0 && (
             <div className="text-center py-12 space-y-8 animate-in fade-in duration-500">
               <div className="space-y-4">

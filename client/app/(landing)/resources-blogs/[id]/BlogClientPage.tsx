@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 import gsap from "gsap";
-import Spinner from "@/components/ui/Spinner";
+import Skeleton from "@/components/ui/Skeleton";
 import { useCachedData } from "@/hooks/useCachedData";
 import { useLanguage } from "@/app/components/LanguageProvider";
 import { getRichTextContent } from "@/lib/rich-text-utils";
@@ -68,7 +68,25 @@ export default function BlogClientPage({ id }: { id: string }) {
     }
   }, [loading, card]);
 
-  if (loading) return <Spinner />;
+  if (loading) return (
+    <div className="min-h-screen bg-[#0A1016] pt-32 pb-24 px-6">
+      <div className="max-w-4xl mx-auto">
+        <div className="flex flex-col items-center gap-6 mb-16">
+          <Skeleton className="h-8 w-32 rounded-full" />
+          <Skeleton className="h-16 w-3/4" />
+          <Skeleton className="h-16 w-2/3" />
+        </div>
+        <Skeleton className="h-96 w-full rounded-3xl mb-12" />
+        <div className="space-y-4">
+          <Skeleton className="h-5 w-full" />
+          <Skeleton className="h-5 w-full" />
+          <Skeleton className="h-5 w-5/6" />
+          <Skeleton className="h-5 w-full" />
+          <Skeleton className="h-5 w-4/6" />
+        </div>
+      </div>
+    </div>
+  );
   if (!card) return (
     <div className="min-h-screen flex flex-col items-center justify-center text-white p-6">
       <h1 className="text-4xl font-bold mb-4">{t.resources.contentNotFound || "Content Not Found"}</h1>

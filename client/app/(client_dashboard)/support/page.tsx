@@ -1,12 +1,12 @@
 "use client";
-import { Loader2 } from "lucide-react";
-
 import { useState, useEffect } from "react";
 import { Mail, Home, Phone, MessageSquare, ArrowRight, Clock, CheckCircle, AlertCircle } from "lucide-react";
 import { useSupportStore } from "@/store/supportStore";
 import { useAuthStore } from "@/store/authStore";
 import { useRouter } from "next/navigation";
 import { useLanguage, interpolate } from "@/lib/i18n/LanguageContext";
+import Skeleton from "@/components/ui/Skeleton";
+import { SkeletonList } from "@/components/ui/SkeletonPresets";
 
 export default function SupportPage() {
   const { t, language: currentLang } = useLanguage();
@@ -87,9 +87,28 @@ export default function SupportPage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4 animate-in fade-in duration-500">
-        <Loader2 className="w-12 h-12 text-primary animate-spin" />
-        <p className="text-sm text-foreground/50 font-medium">Loading...</p>
+      <div className="min-h-screen w-full bg-background text-foreground px-6 md:px-10 py-10">
+        <div className="max-w-6xl mx-auto space-y-10">
+          <div>
+            <Skeleton className="h-9 w-64" />
+            <Skeleton className="h-4 w-80 mt-2" />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2">
+              <div className="bg-card border border-secondary rounded-xl p-6 md:p-8 space-y-6">
+                <Skeleton className="h-6 w-48" />
+                <Skeleton className="h-11 w-full rounded-lg" />
+                <Skeleton className="h-11 w-full rounded-lg" />
+                <Skeleton className="h-32 w-full rounded-lg" />
+                <Skeleton className="h-11 w-40 rounded-lg" />
+              </div>
+            </div>
+            <div className="bg-card border border-secondary rounded-xl p-6">
+              <Skeleton className="h-6 w-32 mb-6" />
+              <SkeletonList rows={4} />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

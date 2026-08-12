@@ -6,6 +6,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import api from "@/lib/axios";
 import Spinner from "../../../components/ui/Spinner";
+import Skeleton from "@/components/ui/Skeleton";
 import { useLanguage } from "../../../app/components/LanguageProvider";
 import { getRichTextContent } from "@/lib/rich-text-utils";
 
@@ -173,7 +174,32 @@ export default function Contact() {
   }, [data]);
 
   if (loading) {
-    return <Spinner />;
+    return (
+      <div className="min-h-screen py-16 px-6 max-w-6xl mx-auto">
+        <div className="flex flex-col items-center gap-4 mb-16">
+          <Skeleton className="h-14 w-1/2 max-w-xl" />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="space-y-6 rounded-2xl border border-white/10 p-8">
+            <Skeleton className="h-6 w-40" />
+            <Skeleton className="h-4 w-64" />
+            <Skeleton className="h-12 w-full rounded-xl" />
+            <Skeleton className="h-12 w-full rounded-xl" />
+            <Skeleton className="h-12 w-full rounded-xl" />
+          </div>
+          <div className="space-y-4 rounded-2xl border border-white/10 p-8">
+            <div className="grid grid-cols-2 gap-4">
+              <Skeleton className="h-12 w-full rounded-xl" />
+              <Skeleton className="h-12 w-full rounded-xl" />
+            </div>
+            <Skeleton className="h-12 w-full rounded-xl" />
+            <Skeleton className="h-12 w-full rounded-xl" />
+            <Skeleton className="h-32 w-full rounded-xl" />
+            <Skeleton className="h-12 w-40 rounded-xl" />
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!data) {

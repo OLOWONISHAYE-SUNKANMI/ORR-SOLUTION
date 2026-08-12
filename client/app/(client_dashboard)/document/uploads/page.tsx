@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Star, FolderOpen, Download, Loader2 } from "lucide-react";
+import { Star, FolderOpen, Download } from "lucide-react";
 import { useDocumentStore } from "@/store/documentStore";
 import { useLanguage, interpolate } from "@/lib/i18n/LanguageContext";
+import Skeleton from "@/components/ui/Skeleton";
 
 export default function DocumentVault() {
   const { t } = useLanguage();
@@ -44,11 +45,18 @@ export default function DocumentVault() {
   if (isLoading) {
     return (
       <div className="min-h-screen w-full px-10 py-10 bg-background text-foreground relative">
-        <h1 className="text-xl font-semibold mb-8 text-lemon">{interpolate(t.dashboard.vault.title)}</h1>
-        <div className="bg-card rounded-xl p-10 w-full min-h-[600px] flex items-center justify-center">
-          <div className="flex items-center gap-2 text-foreground/70">
-            <Loader2 className="animate-spin" size={20} />
-            {interpolate(t.dashboard.vault.loading)}
+        <Skeleton className="h-7 w-48 mb-8" />
+        <div className="bg-card rounded-xl p-10 w-full min-h-[600px]">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-10">
+            {[0, 1, 2].map((col) => (
+              <div key={col}>
+                <Skeleton className="h-4 w-24 mb-3" />
+                <div className="space-y-6">
+                  <Skeleton className="h-40 w-full rounded-lg" />
+                  <Skeleton className="h-40 w-full rounded-lg" />
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>

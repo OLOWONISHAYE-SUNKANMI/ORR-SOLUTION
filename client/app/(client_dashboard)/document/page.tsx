@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import Skeleton from '@/components/ui/Skeleton';
+import { SkeletonCardGrid } from '@/components/ui/SkeletonPresets';
 import { 
   Search, 
   Grid, 
@@ -449,9 +451,13 @@ export default function DocumentWorkspace() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4 animate-in fade-in duration-500">
-        <Loader2 className="w-12 h-12 text-primary animate-spin" />
-        <p className="text-sm text-foreground/50 font-medium">Loading...</p>
+      <div className="min-h-screen bg-background p-4 md:p-6 lg:p-10">
+        <div className="flex flex-col gap-2 mb-8">
+          <Skeleton className="h-9 w-64" />
+          <Skeleton className="h-4 w-80" />
+        </div>
+        <Skeleton className="h-16 w-full rounded-[2rem] mb-8" />
+        <SkeletonCardGrid count={8} />
       </div>
     );
   }

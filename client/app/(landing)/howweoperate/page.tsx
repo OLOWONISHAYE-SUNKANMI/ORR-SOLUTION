@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import Spinner from "../../../components/ui/Spinner";
+import Skeleton from "@/components/ui/Skeleton";
 import { getRichTextContent, getRichTextHTML } from "../../../lib/rich-text-utils";
 import Link from "next/link";
 import { useLanguage } from "../../components/LanguageProvider";
@@ -88,7 +89,24 @@ export default function StickyScrollSplit() {
   }, [data]);
 
   if (loading) {
-    return <Spinner />;
+    return (
+      <div className="min-h-screen bg-background py-20 pt-32">
+        <div className="max-w-6xl mx-auto px-6 md:px-12 lg:px-24">
+          <div className="flex justify-center mb-16">
+            <Skeleton className="h-14 w-2/3 max-w-2xl" />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <div className="space-y-4">
+              <Skeleton className="h-8 w-40" />
+              <Skeleton className="h-5 w-full" />
+              <Skeleton className="h-5 w-5/6" />
+              <Skeleton className="h-5 w-4/6" />
+            </div>
+            <Skeleton className="h-80 w-full rounded-2xl" />
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!data) {

@@ -15,6 +15,8 @@ import { useWalletStore } from '@/store/walletStore';
 import { useToastStore } from '@/store/toastStore';
 import InvoiceDocument from '@/components/billing/InvoiceDocument';
 import ReceiptDocument from '@/components/billing/ReceiptDocument';
+import Skeleton from '@/components/ui/Skeleton';
+import { SkeletonTable } from '@/components/ui/SkeletonPresets';
 
 interface InvoiceDetailClientProps {
   id: string;
@@ -41,8 +43,26 @@ export default function InvoiceDetailClient({ id }: InvoiceDetailClientProps) {
   }, [invoice?.status]);
 
   if (!invoice) return (
-    <div className="flex items-center justify-center min-h-[60vh] text-white">
-      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+    <div className="min-h-screen p-4 md:p-8 bg-[#020810]">
+      <div className="max-w-6xl mx-auto space-y-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <Skeleton className="h-5 w-40" />
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-11 w-32 rounded-xl" />
+            <Skeleton className="h-11 w-11 rounded-xl" />
+            <Skeleton className="h-11 w-40 rounded-xl" />
+          </div>
+        </div>
+        <div className="bg-slate-50 dark:bg-[#0A1A2F] border border-slate-200 dark:border-white/5 rounded-3xl p-4 md:p-12">
+          <div className="space-y-6">
+            <div className="flex justify-between">
+              <Skeleton className="h-10 w-40" />
+              <Skeleton className="h-10 w-32" />
+            </div>
+            <SkeletonTable rows={5} cols={4} />
+          </div>
+        </div>
+      </div>
     </div>
   );
 

@@ -26,12 +26,14 @@ export default function SearchResults() {
   const query = searchParams.get('q') || '';
   const [activeFilters, setActiveFilters] = useState<string[]>(['All']);
 
-  const MOCK_RESULTS = [
-    { id: '1', name: 'Strategic Roadmap 2026', type: 'doc', project: 'ORR-001', category: 'Strategy', date: 'Apr 20, 2026', size: '2.4 MB', score: 98 },
-    { id: '2', name: 'Financial Projections Q3', type: 'sheet', project: 'ORR-002', category: 'Finance', date: 'Apr 18, 2026', size: '1.1 MB', score: 85, locked: true },
-    { id: '3', name: 'Board Presentation - April', type: 'slide', project: 'ORR-001', category: 'Corporate', date: 'Apr 25, 2026', size: '5.8 MB', score: 72 },
-    { id: '5', name: 'Market Analysis - Global', type: 'doc', project: 'ORR-001', category: 'Marketing', date: 'Apr 15, 2026', size: '3.2 MB', score: 64 },
-  ];
+  // There is no document-search API yet, so results start empty. The list
+  // below binds to `results`, so it will render real matches the moment a
+  // search endpoint is wired in — until then the page shows an honest empty
+  // state instead of fabricated documents.
+  const results: {
+    id: string; name: string; type: string; project: string;
+    category: string; date: string; size: string; score: number; locked?: boolean;
+  }[] = [];
 
   return (
     <div className="min-h-screen bg-background p-6 lg:p-10">
@@ -44,7 +46,7 @@ export default function SearchResults() {
         <h1 className="text-4xl font-black text-white flex items-center gap-4">
           "{query || 'Everything'}"
           <span className="bg-primary/20 text-primary text-xs px-3 py-1 rounded-full border border-primary/30 font-black tracking-widest uppercase">
-            {MOCK_RESULTS.length} Results
+            {results.length} Results
           </span>
         </h1>
       </header>
@@ -110,19 +112,21 @@ export default function SearchResults() {
           </div>
 
           <div className="space-y-4">
-            {MOCK_RESULTS.map((result, i) => (
+            {results.map((result, i) => (
               <SearchResultCard key={result.id} result={result} index={i} />
             ))}
           </div>
 
-          {/* Empty State / End of Results */}
-          <div className="py-20 text-center border-t border-white/5 mt-10">
-            <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-6 text-white/20 border border-white/10">
-              <Search size={32} />
+          {/* Empty state — shown until a document-search endpoint exists. */}
+          {results.length === 0 && (
+            <div className="py-20 text-center border-t border-white/5 mt-10">
+              <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-6 text-white/20 border border-white/10">
+                <Search size={32} />
+              </div>
+              <h3 className="text-white/60 font-bold mb-2">No documents to show</h3>
+              <p className="text-white/30 text-sm max-w-xs mx-auto">Document search isn&apos;t available yet. Once it&apos;s connected, matching documents will appear here.</p>
             </div>
-            <h3 className="text-white/60 font-bold mb-2">That's all for now</h3>
-            <p className="text-white/30 text-sm max-w-xs mx-auto">Try refining your search terms or adjusting filters to find more documents.</p>
-          </div>
+          )}
         </div>
       </div>
     </div>
