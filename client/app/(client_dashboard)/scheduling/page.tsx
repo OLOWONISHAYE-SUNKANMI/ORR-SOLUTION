@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
-import { Loader2 } from "lucide-react";
+import Skeleton from "@/components/ui/Skeleton";
+import { SkeletonList } from "@/components/ui/SkeletonPresets";
 import { 
   Calendar,
   dateFnsLocalizer,
@@ -228,9 +229,21 @@ export default function SchedulingPage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4 animate-in fade-in duration-500">
-        <Loader2 className="w-12 h-12 text-primary animate-spin" />
-        <p className="text-sm text-foreground/50 font-medium">Loading...</p>
+      <div className="min-h-screen bg-background text-foreground p-6 sm:p-8 md:p-10 lg:p-14">
+        <div className="mx-auto">
+          <div className="flex items-center justify-between mb-6">
+            <Skeleton className="h-9 w-64" />
+            <Skeleton className="h-11 w-40 rounded-full" />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <div className="lg:col-span-1">
+              <SkeletonList rows={4} />
+            </div>
+            <div className="lg:col-span-3">
+              <Skeleton className="h-[600px] w-full rounded-2xl" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

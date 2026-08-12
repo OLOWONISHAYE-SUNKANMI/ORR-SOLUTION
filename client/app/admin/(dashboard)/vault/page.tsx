@@ -42,6 +42,7 @@ import { clsx } from 'clsx';
 import { vaultApi, VaultDocument } from '@/lib/vault-api';
 import { adminVaultApi, Client } from '@/lib/admin-vault-api';
 import { AuthService } from '@/lib/auth';
+import { SkeletonCardGrid } from '@/components/ui/SkeletonPresets';
 
 export default function AdminDocumentVault() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -167,9 +168,7 @@ export default function AdminDocumentVault() {
         <div className="flex gap-8">
           <div className="flex-1">
             {isLoading ? (
-              <div className="flex items-center justify-center py-20">
-                <Loader2 className="w-10 h-10 animate-spin text-primary" />
-              </div>
+              <SkeletonCardGrid count={6} />
             ) : filteredFiles.length === 0 ? (
               <div className="text-center py-20 bg-card/10 border border-dashed border-white/10 rounded-[3rem]">
                 <FileText className="w-16 h-16 text-white/10 mx-auto mb-4" />

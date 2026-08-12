@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import Spinner from "../../../components/ui/Spinner";
+import Skeleton from "@/components/ui/Skeleton";
+import { SkeletonCardGrid } from "@/components/ui/SkeletonPresets";
 import { getRichTextContent } from "../../../lib/rich-text-utils";
 import { useLanguage } from "../../../app/components/LanguageProvider";
 
@@ -92,7 +94,16 @@ export default function Services() {
   }, [data]);
 
   if (loading) {
-    return <Spinner />;
+    return (
+      <div className="min-h-screen py-16 px-6 max-w-6xl mx-auto">
+        <div className="flex flex-col items-center gap-4 mb-16">
+          <Skeleton className="h-14 w-2/3 max-w-2xl" />
+          <Skeleton className="h-6 w-1/2 max-w-lg" />
+        </div>
+        <SkeletonCardGrid count={3} />
+        <Skeleton className="h-72 w-full rounded-2xl mt-16" />
+      </div>
+    );
   }
 
   if (!data) {

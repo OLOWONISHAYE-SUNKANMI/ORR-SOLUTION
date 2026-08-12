@@ -1,9 +1,10 @@
 "use client";
-import { Loader2 } from "lucide-react";
 
 import React, { useEffect } from "react";
 import { useBillingStore } from "@/store/billingStore";
 import { useLanguage, interpolate } from "@/lib/i18n/LanguageContext";
+import Skeleton from "@/components/ui/Skeleton";
+import { SkeletonTable } from "@/components/ui/SkeletonPresets";
 
 export default function PlansBillingPage() {
   const { t, language: currentLang } = useLanguage();
@@ -16,9 +17,15 @@ export default function PlansBillingPage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4 animate-in fade-in duration-500">
-        <Loader2 className="w-12 h-12 text-primary animate-spin" />
-        <p className="text-sm text-foreground/50 font-medium">Loading...</p>
+      <div className="min-h-screen w-full text-white px-4 py-10 flex flex-col items-center">
+        <div className="w-full">
+          <Skeleton className="h-9 w-56 mb-6" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+            <Skeleton className="h-48 w-full rounded-xl" />
+            <Skeleton className="h-48 w-full rounded-xl" />
+          </div>
+          <SkeletonTable rows={5} cols={6} />
+        </div>
       </div>
     );
   }

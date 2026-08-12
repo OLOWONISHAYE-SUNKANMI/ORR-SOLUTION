@@ -10,6 +10,8 @@ import CaseExampleSection from "@/components/shared/CaseExampleSection";
 import FinalCTASection from "@/components/living_systems/FinalCTASection";
 import { getRichTextContent } from "@/lib/rich-text-utils";
 import { useLanguage } from "@/app/components/LanguageProvider";
+import Skeleton from "@/components/ui/Skeleton";
+import { SkeletonCardGrid } from "@/components/ui/SkeletonPresets";
 
 export default function LivingSystemsPage() {
   const { t, language, interpolate } = useLanguage();
@@ -57,8 +59,15 @@ export default function LivingSystemsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      <div className="min-h-screen py-12 px-6 max-w-6xl mx-auto">
+        <div className="flex flex-col items-center gap-4 mb-16">
+          <Skeleton className="h-12 w-2/3 max-w-xl" />
+          <Skeleton className="h-5 w-1/2 max-w-md" />
+          <Skeleton className="h-5 w-1/3 max-w-sm" />
+        </div>
+        <Skeleton className="h-64 w-full rounded-2xl mb-16" />
+        <SkeletonCardGrid count={3} />
+        <Skeleton className="h-48 w-full rounded-2xl mt-16" />
       </div>
     );
   }

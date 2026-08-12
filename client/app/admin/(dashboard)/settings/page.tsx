@@ -5,32 +5,6 @@ import { useState } from "react";
 import CreateUserModal from "./CreateUserModal";
 import UserManagementTable from "./UserManagementTable";
 
-const tableData = [
-  {
-    id: "#1001",
-    role: "Administrator",
-    permissions: "Full access to all features",
-  },
-  {
-    id: "#1001",
-    role: "Editor",
-    permissions: "Can create and manage posts",
-  },
-  {
-    id: "#1001",
-    role: "Viewer",
-    permissions: "Can view content only",
-  },
-];
-const categories = [
-  "Technology",
-  "Health",
-  "Science",
-  "Lifestyle",
-  "Business",
-  "Entertainment",
-];
-
 export default function SettingsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 

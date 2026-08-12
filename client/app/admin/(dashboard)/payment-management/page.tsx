@@ -1,61 +1,21 @@
 "use client";
-import {
-  ArrowDown,
-  ArrowUp,
-  DollarSign,
-  MoreVertical,
-  Wallet,
-} from "lucide-react";
+import { ArrowDown, ArrowUp, DollarSign, Wallet } from "lucide-react";
 import { useState } from "react";
 
-const tableData = [
-  {
-    refId: "456789366",
-    transactionDate: "Sept 12, 2024, 4:30PM",
-    date: "2024-07-26",
-    status: "Pending",
-    amount: "+5,670",
-    type: "Income",
-    from: "fadel@gmail.com",
-  },
-  {
-    refId: "456789366",
-    transactionDate: "Sept 12, 2024, 4:30PM",
-    date: "2024-07-26",
-    status: "Completed",
-    amount: "+5,670",
-    type: "Savings",
-    from: "Wise - 5466xxx",
-  },
-  {
-    refId: "456789366",
-    transactionDate: "Sept 12, 2024, 4:30PM",
-    date: "2024-07-26",
-    status: "Cancelled",
-    amount: "-15,670",
-    type: "Expenses",
-    from: "Paypal - 5466xxx",
-  },
-  {
-    refId: "456789366",
-    transactionDate: "Sept 12, 2024, 4:30PM",
-    date: "2024-07-26",
-    status: "Pending",
-    amount: "+3,670",
-    type: "Income",
-    from: "fadel@gmail.com",
-  },
-  {
-    refId: "456789366",
-    transactionDate: "Sept 12, 2024, 4:30PM",
-    date: "2024-07-26",
-    status: "Completed",
-    amount: "+35,670",
-    type: "Savings",
-    from: "Wise - 5466xxx",
-  },
-];
+// No billing/transactions endpoint is wired into this embedded admin view yet,
+// so balances and the transactions table render empty states rather than the
+// fabricated figures and transactions they previously hardcoded. Wire to the
+// admin billing / wallet-logs / invoicing endpoints when connecting this view.
+
 const navCategories = ["All", "Savings", "Income", "Expenses"];
+
+const balanceCards = [
+  { label: "Balances", icon: DollarSign },
+  { label: "Savings", icon: Wallet },
+  { label: "Incomes", icon: ArrowDown },
+  { label: "Expenses", icon: ArrowUp },
+];
+
 function page() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   return (
@@ -70,7 +30,7 @@ function page() {
             </h1>
             <div className="flex items-center justify-between gap-3">
               <div className="text-white bg-primary p-3 rounded-xl">
-                Sep 9, 2024 - Oct 15, 2024
+                Select date range
               </div>
               <div className="flex items-center gap-3">
                 <button className="text-white bg-primary p-3 rounded-xl">
@@ -82,53 +42,22 @@ function page() {
               </div>
             </div>
             <div className="flex items-center justify-between gap-3">
-              <div className="bg-white/10 rounded-lg p-4 w-full">
-                <div className="flex items-center gap-3">
-                  <div className="bg-white/20 w-10 h-10 rounded-full">
-                    <DollarSign className="w-6 h-6 text-primary m-2" />
-                  </div>
-                  <div>
-                    <p>Balances</p>
-                    <p className="font-bold text-3xl">$78,987.00</p>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-white/10 rounded-lg p-4 w-full">
-                <div className="flex items-center gap-3">
-                  <div className="bg-white/20 w-10 h-10 rounded-full">
-                    <Wallet className="w-6 h-6 text-primary m-2" />
-                  </div>
-                  <div>
-                    <p>Savings</p>
-                    <p className="font-bold text-3xl">$23,000.00</p>
+              {balanceCards.map(({ label, icon: Icon }) => (
+                <div key={label} className="bg-white/10 rounded-lg p-4 w-full">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-white/20 w-10 h-10 rounded-full">
+                      <Icon className="w-6 h-6 text-primary m-2" />
+                    </div>
+                    <div>
+                      <p>{label}</p>
+                      <p className="font-bold text-3xl">&mdash;</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="bg-white/10 rounded-lg p-4 w-full">
-                <div className="flex items-center gap-3">
-                  <div className="bg-white/20 w-10 h-10 rounded-full">
-                    <ArrowDown className="w-6 h-6 text-primary m-2" />
-                  </div>
-                  <div>
-                    <p>Incomes</p>
-                    <p className="font-bold text-3xl">$28,670.00</p>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-white/10 rounded-lg p-4 w-full">
-                <div className="flex items-center gap-3">
-                  <div className="bg-white/20 w-10 h-10 rounded-full">
-                    <ArrowUp className="w-6 h-6 text-primary m-2" />
-                  </div>
-                  <div>
-                    <p>Expenses</p>
-                    <p className="font-bold text-3xl">$3,456.00</p>
-                  </div>
-                </div>
-              </div>
+              ))}
             </div>
             <div className="bg-white/10 rounded-lg">
-              <div  className="flex items-center justify-between px-3">
+              <div className="flex items-center justify-between px-3">
                 <div className="flex items-center">
                   {navCategories.map((category, index) => (
                     <div
@@ -145,7 +74,7 @@ function page() {
                   ))}
                 </div>
 
-                <div className=" text-lg">Status: All</div>
+                <div className="text-lg">Status: All</div>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -160,54 +89,12 @@ function page() {
                       <th className="text-left p-3">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="space-y-4">
-                    {tableData.map((row, index) => (
-                      <tr key={index} className="border-b border-[#0ec277]">
-                        <td className="py-4 px-4">
-                          <div className="flex items-center gap-3">
-                            <span className="text-white ">{row.refId}</span>
-                          </div>
-                        </td>
-                        <td className="py-4 px-4">
-                          <div className="flex items-center gap-3">
-                            <span className="text-white ">
-                              {row.transactionDate}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="py-4 px-4 flex items-center gap-3">
-                          <div className="bg-white/20 w-10 h-10 rounded-full flex items-center justify-center">
-                            {row.from[0].toUpperCase()}
-                          </div>
-                          <span>{row.from}</span>
-                        </td>
-                        <td className="py-4 px-4">
-                          <span className="text-white/70">{row.type}</span>
-                        </td>
-
-                        <td className="py-4 px-4">
-                          <span className="rounded text-sm ">{row.amount}</span>
-                        </td>
-                        <td className="py-4 px-4">
-                          <span
-                            className={`rounded text-sm ${
-                              row.status === "Completed"
-                                ? "bg-green-500/20 text-green-500 p-2"
-                                : row.status === "Pending"
-                                ? "bg-yellow-500/20 text-yellow-500 p-2"
-                                : "bg-red-500/20 text-red-500 p-2"
-                            }`}
-                          >
-                            {row.status}
-                          </span>
-                        </td>
-                        <td className="py-4 px-4">
-                          <div className="flex justify-end">
-                            <MoreVertical />
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                  <tbody>
+                    <tr>
+                      <td colSpan={7} className="py-10 px-4 text-center text-gray-300 text-sm">
+                        No transactions to show yet.
+                      </td>
+                    </tr>
                   </tbody>
                 </table>
               </div>

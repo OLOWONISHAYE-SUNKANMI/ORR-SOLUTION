@@ -3,9 +3,10 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useProjectStore } from "@/store/projectStore";
-import { ArrowLeft, Clock, FileText, CheckCircle, AlertCircle, Loader2, Download } from "lucide-react";
+import { ArrowLeft, Clock, FileText, CheckCircle, AlertCircle, Download } from "lucide-react";
 import Link from "next/link";
 import clsx from "clsx";
+import Skeleton from "@/components/ui/Skeleton";
 
 export default function ClientProjectDetailPage() {
   const params = useParams();
@@ -21,10 +22,23 @@ export default function ClientProjectDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4 animate-in fade-in duration-500">
-        <Loader2 className="w-12 h-12 text-primary animate-spin" />
-        <p className="text-sm text-foreground/50 font-medium">Loading project details...</p>
-      </div>
+      <main className="min-h-full p-4 md:p-6 bg-background">
+        <div className="max-w-4xl mx-auto space-y-8 pb-12">
+          <Skeleton className="h-4 w-32" />
+          <div className="bg-card border border-white/10 rounded-2xl p-6 md:p-8">
+            <div className="flex items-center gap-3 mb-4">
+              <Skeleton className="h-6 w-24 rounded-lg" />
+              <Skeleton className="h-6 w-20 rounded-full" />
+            </div>
+            <Skeleton className="h-8 w-2/3 mb-3" />
+            <Skeleton className="h-4 w-40" />
+          </div>
+          <div className="grid grid-cols-1 gap-6">
+            <Skeleton className="h-32 w-full rounded-2xl" />
+            <Skeleton className="h-32 w-full rounded-2xl" />
+          </div>
+        </div>
+      </main>
     );
   }
 

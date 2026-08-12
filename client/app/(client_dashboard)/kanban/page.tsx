@@ -25,90 +25,25 @@ type BoardData = {
   columns: Record<string, Column>;
 };
 
-// Dummy Data
+// There is no client-facing task/board API yet, so the board starts empty.
+// The three-column scaffold and drag-and-drop remain so the feature is ready
+// to bind to real tasks once an endpoint exists — no seeded placeholder cards.
 const initialData: BoardData = {
   columns: {
     todo: {
       id: "todo",
       title: "To Do task",
-      tasks: [
-        {
-          id: "1",
-          title: "Webdev",
-          team: "Cisco Team",
-          days: 12,
-          comments: 7,
-          attachments: 8,
-        },
-        {
-          id: "2",
-          title: "Create a new theme",
-          team: "Gento Team",
-          days: 9,
-          comments: 3,
-          attachments: 5,
-        },
-        {
-          id: "3",
-          title: "Improve social banners",
-          team: "Developing Team",
-          days: 17,
-          comments: 5,
-          attachments: 9,
-        },
-      ],
+      tasks: [],
     },
     progress: {
       id: "progress",
       title: "In Progress",
-      tasks: [
-        {
-          id: "4",
-          title: "Webdev",
-          team: "Cisco Team",
-          days: 12,
-          comments: 7,
-          attachments: 8,
-        },
-        {
-          id: "5",
-          title: "Create a new theme",
-          team: "Gento Team",
-          days: 9,
-          comments: 3,
-          attachments: 5,
-        },
-      ],
+      tasks: [],
     },
     done: {
       id: "done",
       title: "Completed",
-      tasks: [
-        {
-          id: "6",
-          title: "Webdev",
-          team: "Cisco Team",
-          days: 12,
-          comments: 7,
-          attachments: 8,
-        },
-        {
-          id: "7",
-          title: "Create a new theme",
-          team: "Gento Team",
-          days: 9,
-          comments: 3,
-          attachments: 5,
-        },
-        {
-          id: "8",
-          title: "Improve social banners",
-          team: "Developing Team",
-          days: 17,
-          comments: 5,
-          attachments: 9,
-        },
-      ],
+      tasks: [],
     },
   },
 };
@@ -160,13 +95,6 @@ export default function OrganisationBoard() {
             <p className="text-sm text-foreground opacity-70 mb-6">{interpolate(t.dashboard.kanban.desc)}</p>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="flex -space-x-2">
-              <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face" alt="User 1" className="w-10 h-10 rounded-full border border-foreground object-cover" />
-              <img src="https://images.unsplash.com/photo-1494790108755-2616b612b786?w=40&h=40&fit=crop&crop=face" alt="User 2" className="w-10 h-10 rounded-full border border-foreground object-cover" />
-              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face" alt="User 3" className="w-10 h-10 rounded-full border border-foreground object-cover" />
-              <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=40&h=40&fit=crop&crop=face" alt="User 4" className="w-10 h-10 rounded-full border border-foreground object-cover" />
-              <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=40&h=40&fit=crop&crop=face" alt="User 5" className="w-10 h-10 rounded-full border border-foreground object-cover" />
-            </div>
             <button className="w-9 h-9 flex items-center justify-center rounded-full bg-primary text-background font-bold">+</button>
           </div>
         </div>
@@ -236,6 +164,11 @@ export default function OrganisationBoard() {
                             )}
                           </Draggable>
                         ))}
+                        {column.tasks.length === 0 && (
+                          <div className="text-center text-xs text-foreground opacity-40 py-8 select-none">
+                            {interpolate(t.dashboard.kanban.empty) || "No tasks yet"}
+                          </div>
+                        )}
                         {provided.placeholder}
                       </div>
                     )}

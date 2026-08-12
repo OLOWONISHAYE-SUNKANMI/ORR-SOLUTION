@@ -1,42 +1,9 @@
 import Link from "next/link";
 
-const tableData = [
-  {
-    id: "#1001",
-    title: "HExploring the cosmos",
-    date: "2024-07-26",
-    author: "Ethan Carter",
-    status: "Published",
-  },
-  {
-    id: "#1001",
-    title: "The Art Of Coding",
-    date: "2024-07-26",
-    author: "Olivia Bennet",
-    status: "Draft",
-  },
-  {
-    id: "#1001",
-    title: "Sustainable living tips",
-    date: "2024-07-26",
-    author: "Noah Thompson",
-    status: "Published",
-  },
-  {
-    id: "#1001",
-    title: "Digital marketing trends",
-    date: "2024-07-26",
-    author: "Ava Harper",
-    status: "Published",
-  },
-  {
-    id: "#1001",
-    title: "Photography essentials",
-    date: "2024-07-26",
-    author: "Liam Foster",
-    status: "Draft",
-  },
-];
+// No posts endpoint is wired into this embedded admin view yet, so the posts
+// table renders an empty state instead of the fabricated blog rows it
+// previously hardcoded. Bind to the CMS/blog endpoints when connecting it.
+
 function page() {
   return (
     <div>
@@ -67,31 +34,12 @@ function page() {
                     <th className="text-left p-3">Date</th>
                   </tr>
                 </thead>
-                <tbody className="space-y-4">
-                  {tableData.map((row, index) => (
-                    <tr key={index} className="border-b border-[#0ec277]">
-                      <td className="py-4 px-4">
-                        <div className="flex items-center gap-3">
-                          <span className="text-white font-medium">
-                            {row.title}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="bg-primary text-white w-fit px-3 py-2 rounded-lg">
-                          <span className="text-white/70">{row.status}</span>
-                        </div>
-                      </td>
-                      <td className="py-4 px-4 text-primary">
-                        <span>{row.author}</span>
-                      </td>
-                      <td className="py-4 px-4 text-primary">
-                        <span className="px-4 py-2 rounded text-sm font-medium">
-                          {row.date}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                <tbody>
+                  <tr>
+                    <td colSpan={4} className="py-10 px-4 text-center text-gray-400 text-sm">
+                      No posts to show yet.
+                    </td>
+                  </tr>
                 </tbody>
               </table>
             </div>
